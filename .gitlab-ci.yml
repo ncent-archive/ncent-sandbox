@@ -1,5 +1,8 @@
 image: docker:stable
 
+variables:
+  REPOSITORY_URL: 779089996899.dkr.ecr.us-east-2.amazonaws.com/ncnt-sandbox
+
 cache:
   paths:
   - node_modules/
@@ -9,10 +12,21 @@ services:
 
 before_script:
   - docker info
+  - apk add --no-cache curl jq python py-pip
+  - pip install awscli
+  
+stages:
+  - build
 
 build:
   stage: build
   script:
+    - $(aws ecr get-login --no-include-email --region us-east-1)
     - docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
     - docker build . -t ncent/ncent-sandbox
-    - docker run --rm -p 8010:8010 --name sandbox --link ncent-postgres:ncent-postgres -it -d ncent/ncent-sandbox
+    - docker tag ncnt-sandbox:latest $REPOSITORY_URL:latest
+    - docker push $REPOSITORY_URL
+  only:
+    - master
+  tags:
+    - docker
