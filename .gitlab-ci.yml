@@ -24,6 +24,7 @@ build:
     - $(aws ecr get-login --no-include-email --region us-east-1)
     - docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
     - docker build . -t ncent/ncent-sandbox
+    - docker tag ncnt-sandbox:latest $REPOSITORY_URL:latest
     - docker push $REPOSITORY_URL
   only:
     - master
