@@ -30,8 +30,9 @@ module.exports = {
           return res.status(404).send({
             message: 'Wallet Not Found',
           });
+        } else {
+          return res.status(200).send(wallet);
         }
-        return res.status(200).send(wallet);
       })
       .catch(error => res.status(400).send(error));
   },
@@ -48,8 +49,10 @@ module.exports = {
         return res.status(404).send({
           message: 'Balance for Wallet Not Found',
         });
+      } else {
+        return res.status(200).send(wallet);
       }
-      return res.status(200).send(wallet);
     })
+    .catch(error => res.status(400).send(error));
   }
 };
