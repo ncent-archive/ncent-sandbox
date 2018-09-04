@@ -21,7 +21,7 @@ stages:
 build:
   stage: build
   script:
-    - $(aws ecr get-login --no-include-email --region us-east-1)
+    - $(aws ecr get-login --no-include-email --region us-east-2)
     - docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
     - docker build . -t ncent-sandbox
     - docker tag ncent-sandbox:latest $REPOSITORY_URL:latest
