@@ -1,0 +1,17 @@
+image: node:4.2.2
+
+cache:
+  paths:
+  - node_modules/
+
+stages:
+  - test
+
+test_db:
+  stage: test
+  script:
+    - docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
+    - docker build . -t ncent/ncent-sandbox
+    - docker run --rm -p 8010:8010 --name sandbox --link ncent-postgres:ncent-postgres -it -d ncent/ncent-sandbox
+  tags:
+    - docker

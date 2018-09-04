@@ -16,8 +16,52 @@ The [config.json file](https://github.com/ncent/ncent.github.io/blob/master/Sand
 
 ## Installation
 
-Please follow [these instructions](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/README.md) to run an instance of the sandbox locally. 
+### Using Docker to run the sandbox locally
 
+First install docker locally: https://www.docker.com/products/docker-desktop
+
+#### Run a Postgres server first
+
+```
+docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
+```
+
+#### Build and run the sandbox docker image
+
+```
+docker build . -t ncent/ncent-sandbox
+docker run --rm -p 8010:8010 --name sandbox --link ncent-postgres:ncent-postgres -it -d ncent/ncent-sandbox
+```
+
+#### Access the sandbox apis
+
+From your local machine:
+
+```
+curl http://localhost:8010/api
+{"message":"Welcome to the NCNT API!"}
+
+curl http://localhost:8010/api/wallets
+[]
+```
+
+#### Debugging
+
+To view the logs of the docker container:
+
+```
+docker logs ncent-postgres
+docker logs sandbox
+```
+
+#### Stop the containers
+
+```
+docker rm -f sandbox
+docker rm -f ncent-postgres
+```
+
+### Accessing the Sandbox Remotely
 We also have our own instance of the sandbox hosted on AWS. To access its APIs, simply add the routes detailed in the endpoints section below to the IP Address and port of our hosted instance: http://18.219.87.29:8010/api
 
 ## Endpoints Documentation
