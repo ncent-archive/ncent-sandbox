@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports =
-    JSON.stringify({
+    {
         "production": {
             "username": process.env.DB_USERNAME,
             "password": process.env.DB_PASSWORD,
@@ -18,4 +18,4 @@ module.exports =
             "port": 5432,
             "dialect": "postgres"
         }
-    });
+    };

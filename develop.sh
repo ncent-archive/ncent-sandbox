@@ -1,5 +1,5 @@
 # Create the DB
-PGPASSWORD=ncent psql -h ncent-postgres -p 5432 postgres postgres -c "CREATE DATABASE \"ncnt_dev\""
+PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT postgres postgres -c "CREATE DATABASE \"ncnt-test\""
 
 # Update hostname in config file
 cd server
@@ -11,3 +11,4 @@ cd ../
 
 # Start server
 npm run start:dev
+
