@@ -16,14 +16,13 @@ before_script:
   - pip install awscli
   
 stages:
-  - build
+  - build_production
 
-build:
+build_production:
   stage: build
   script:
     - $(aws ecr get-login --no-include-email --region us-east-2)
-    - docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
-    - docker build . -t ncent-sandbox
+    - docker build --build-arg DB_USERNAME=$PRODUCTION_DB_USERNAME DB_PASSWORD=$PRODUCTION_DB_PASSWORD DB_HOST=$PRODUCTION_DB_HOST DB_PORT=$PRODUCTION_DB_PORT . -t ncent-sandbox
     - docker tag ncent-sandbox:latest $REPOSITORY_URL:latest
     - docker push $REPOSITORY_URL
   only:
