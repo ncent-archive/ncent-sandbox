@@ -12,7 +12,7 @@ The request handling is implemented in the [controllers directory](https://githu
 
 The database schema and migrations are handled in the [models directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/models) and [migrations directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/migrations), respectively. 
 
-The [config.json file](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/config/config.json) handles the location and details of the database. 
+The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/config/config.js) handles the location and details of the database. 
 
 ## Installation
 

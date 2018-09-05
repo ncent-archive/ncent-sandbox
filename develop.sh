@@ -3,7 +3,7 @@ PGPASSWORD=ncent psql -h ncent-postgres -p 5432 postgres postgres -c "CREATE DAT
 
 # Update hostname in config file
 cd server
-sed -i 's/localhost/ncent-postgres/g' config/config.json
+sed -i 's/localhost/ncent-postgres/g' config/config.js
 
 # Init the db
 ../node_modules/.bin/sequelize db:migrate
