@@ -19,7 +19,7 @@ stages:
   - build_production
 
 build_production:
-  stage: build
+  stage: build_production
   script:
     - $(aws ecr get-login --no-include-email --region us-east-2)
     - docker build --build-arg DB_USERNAME=$PRODUCTION_DB_USERNAME DB_PASSWORD=$PRODUCTION_DB_PASSWORD DB_HOST=$PRODUCTION_DB_HOST DB_PORT=$PRODUCTION_DB_PORT . -t ncent-sandbox
