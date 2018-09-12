@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     Transaction.belongsTo(models.TokenType, {
 	    foreignKey: 'tokentype_uuid',
 	    onDelete: 'CASCADE',
-    }); 
+    });
   };
   sequelize.sync();
   return Transaction;

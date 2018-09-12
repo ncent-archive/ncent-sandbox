@@ -1,13 +1,13 @@
-const Models = require('../../../server/models')
-const TokenType = Models.TokenType;
-const Transaction = Models.Transaction;
+const db = require('../../../server/models')
+const TokenType = db.TokenType;
+const Transaction = db.Transaction;
 const StellarSdk = require('stellar-sdk');
 
 describe('TokenType model', () => {
   let tokenType;
   const keypair = Object.freeze(StellarSdk.Keypair.random());
   const tokenTypeTemplate = Object.freeze({
-    Name: 'testTokenName',
+    Name: 'TokenName',
     ExpiryDate: '2020',
     sponsor_uuid: keypair.publicKey(),
     totalTokens: 10000,
@@ -23,7 +23,7 @@ describe('TokenType model', () => {
     done();
   });
 
-  it('returns an instance with the given values', async (done) => {
+  it('returns an instance with correct properties', async (done) => {
     expect(typeof tokenType).toBe('object');
     expect(tokenType.Name).toBe(tokenTypeTemplate.Name);
     expect(tokenType.ExpiryDate.getTime()).toBe(
@@ -59,6 +59,7 @@ describe('TokenType model', () => {
     })
     const retrievedTransaction = tokenWithTransactions['transactions'][0];
     expect (retrievedTransaction.tokentype_uuid).toBe(tokenType.uuid);
+    transaction.destroy();
     done();
   });
 });

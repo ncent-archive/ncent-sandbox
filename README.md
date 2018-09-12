@@ -20,6 +20,21 @@ The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbo
 
 First install docker locally: https://www.docker.com/products/docker-desktop
 
+#### Create a secret.env
+```
+DB_USERNAME=postgres
+DB_PASSWORD=dickey
+DB_HOST=docker.for.mac.host.internal
+DB_PORT=5432
+```
+
+#### Configure postgres
+```
+psql -U postgres
+postgres=# SHOW config_file;
+```
+Navigate to your config file and change...
+
 #### Run a Postgres server and build/run the sandbox docker image
 
 ```
@@ -43,13 +58,19 @@ curl http://localhost:8010/api/wallets
 To view the logs of the docker container:
 
 ```
-sh printDockerLogs.sh
+docker logs sandboxContainer
 ```
 
-#### Stop the containers
+#### Stop the container
 
 ```
-sh stopDockerContainers.sh
+docker rm -f sandboxContainer
+```
+
+#### Run tests
+
+```
+sh execDockerTests.sh
 ```
 
 ### Accessing the Sandbox Remotely

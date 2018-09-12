@@ -2,7 +2,7 @@
 module.exports = (sequelize, DataTypes) => {
   const TokenType = sequelize.define('TokenType', {
     Name: {
-	    type: DataTypes.STRING, 
+	    type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
@@ -38,16 +38,16 @@ module.exports = (sequelize, DataTypes) => {
 	  //   defaultValue: 1
     // },
     // ProvenanceLength: {
-	  //   type: DataTypes.INTEGER, 
+	  //   type: DataTypes.INTEGER,
 	  //   defaultValue: 1
     // },
-    // Lambda: DataTypes.FLOAT, 
+    // Lambda: DataTypes.FLOAT,
   });
- 
+
   TokenType.associate = (models) => {
     TokenType.hasMany(models.Transaction, {
 	    foreignKey: 'tokentype_uuid',
-	    as: 'transactions', 
+	    as: 'transactions',
     });
   };
   sequelize.sync();
