@@ -1,1 +1,1 @@
-docker exec sandbox npm run test
+docker exec sandbox npm test

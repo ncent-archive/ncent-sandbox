@@ -15,7 +15,10 @@ describe('TokenType', () => {
     done();
   });
 
-  // afterEach()
+  afterEach(async (done) => {
+    await tokenType.destroy();
+    done();
+  })
 
   it('successfully returns an instance', async (done) => {
     expect(typeof tokenType).toBe('object');
