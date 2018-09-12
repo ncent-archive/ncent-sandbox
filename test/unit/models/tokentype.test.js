@@ -42,13 +42,13 @@ describe('TokenType model', () => {
   });
 
   it ('creates an association with the Transaction model', async (done) => {
-    const keypair = StellarSdk.Keypair.random();
+    const keypair1 = StellarSdk.Keypair.random();
     const keypair2 = StellarSdk.Keypair.random();
     const transactionTemplate = {
       tokentype_uuid: tokenType.uuid,
       amount: 1000,
-      fromAddress: keypair.publicKey(),
-      toAddress: 10000,
+      fromAddress: keypair1.publicKey(),
+      toAddress: keypair2.publicKey(),
     };
     const transaction = await Transaction.create(transactionTemplate);
     const tokenWithTransactions = await TokenType.findById(tokenType.uuid, {
