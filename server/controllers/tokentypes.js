@@ -22,7 +22,7 @@ module.exports = {
         wallet_uuid: req.body.sponsor_uuid,
         tokentype_uuid: tokentype.dataValues.uuid,
         balance: req.body.totalTokens,
-      })
+      });
     })
     .then(function(wllet) {
       data["wallet"] = wllet;
