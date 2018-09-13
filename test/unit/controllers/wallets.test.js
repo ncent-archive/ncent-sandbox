@@ -4,18 +4,6 @@ const db = require('../../../server/models')
 const TokenType = db.TokenType;
 const Wallet = db.Wallet;
 
-class psuedoRes {
-  constructor(callback) {
-    this.sendCallback = callback;
-  }
-  status(val) {
-    return this;
-  }
-  send(val) {
-    return this.sendCallback(val);
-  }
-}
-
 describe('wallets Controller', () => {
   let tokenType;
   let wallet;
