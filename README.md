@@ -70,7 +70,7 @@ docker rm -f sandboxContainer
 #### Run tests
 
 ```
-sh execDockerTests.sh
+sh execTests.sh
 ```
 
 ### Accessing the Sandbox Remotely

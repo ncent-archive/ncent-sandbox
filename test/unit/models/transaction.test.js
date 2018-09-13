@@ -6,32 +6,31 @@ const StellarSdk = require('stellar-sdk');
 describe('Transaction Model', () => {
   let tokenType;
   let transaction;
-  const keypair1 = Object.freeze(StellarSdk.Keypair.random());
-  const keypair2 = Object.freeze(StellarSdk.Keypair.random());
-  const tokenTypeTemplate = Object.freeze({
-    Name: 'TokenName',
-    ExpiryDate: '2020',
-    sponsor_uuid: keypair1.publicKey(),
-    totalTokens: 10000,
-  });
-  const transactionDetails = Object.freeze({
-    tokentype_uuid: '',
-    amount: Math.floor(Math.random() * 1000) + 1,
-    fromAddress: keypair1.publicKey(),
-    toAddress: keypair2.publicKey(),
-  });
+  let tokenTypeTemplate;
+  let transactionTemplate;
 
   beforeEach(async (done) => {
+    const keypair1 = StellarSdk.Keypair.random();
+    const keypair2 = StellarSdk.Keypair.random();
+    tokenTypeTemplate = {
+      Name: Math.random().toString(36).slice(2),
+      ExpiryDate: '2020',
+      sponsor_uuid: keypair1.publicKey(),
+      totalTokens: 10000,
+    };
     tokenType = await TokenType.create(tokenTypeTemplate);
-    const transactionTemplate =
-      Object.assign({}, transactionDetails, {tokentype_uuid: tokenType.uuid});
+    transactionTemplate = {
+      tokentype_uuid: tokenType.uuid,
+      amount: Math.floor(Math.random() * 1000) + 1,
+      fromAddress: keypair1.publicKey(),
+      toAddress: keypair2.publicKey(),
+    };
     transaction = await Transaction.create(transactionTemplate);
     done();
   });
 
   afterEach(async (done) => {
     await tokenType.destroy();
-    await transaction.destroy();
     done();
   });
 
@@ -39,9 +38,9 @@ describe('Transaction Model', () => {
     expect(typeof transaction).toBe('object');
     expect(transaction.tokentype_uuid).toBe(tokenType.uuid);
     expect(typeof transaction.uuid).toBe('string');
-    expect(transaction.amount).toBe(transactionDetails.amount);
-    expect(transaction.fromAddress).toBe(transactionDetails.fromAddress);
-    expect(transaction.toAddress).toBe(transactionDetails.toAddress);
+    expect(transaction.amount).toBe(transactionTemplate.amount);
+    expect(transaction.fromAddress).toBe(transactionTemplate.fromAddress);
+    expect(transaction.toAddress).toBe(transactionTemplate.toAddress);
     done();
   });
 
@@ -61,6 +60,4 @@ describe('Transaction Model', () => {
     expect (transactionValues.tokentype_uuid).toBe(tokenTypeValues.uuid);
     done();
   });
-
-
 });

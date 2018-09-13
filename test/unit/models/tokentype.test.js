@@ -5,15 +5,16 @@ const StellarSdk = require('stellar-sdk');
 
 describe('TokenType model', () => {
   let tokenType;
-  const keypair = Object.freeze(StellarSdk.Keypair.random());
-  const tokenTypeTemplate = Object.freeze({
-    Name: 'TokenName',
-    ExpiryDate: '2020',
-    sponsor_uuid: keypair.publicKey(),
-    totalTokens: 10000,
-  });
+  let tokenTypeTemplate;
 
   beforeEach(async (done) => {
+    const keypair = StellarSdk.Keypair.random();
+    tokenTypeTemplate = {
+      Name: Math.random().toString(36).slice(2),
+      ExpiryDate: '2020',
+      sponsor_uuid: keypair.publicKey(),
+      totalTokens: 10000,
+    };
     tokenType = await TokenType.create(tokenTypeTemplate);
     done();
   });
@@ -59,7 +60,6 @@ describe('TokenType model', () => {
     })
     const retrievedTransaction = tokenWithTransactions['transactions'][0];
     expect (retrievedTransaction.tokentype_uuid).toBe(tokenType.uuid);
-    transaction.destroy();
     done();
   });
 });
