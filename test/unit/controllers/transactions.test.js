@@ -6,12 +6,26 @@ const Wallet = db.Wallet;
 const Transaction = db.Transaction;
 
 describe('transactions Controller', () => {
+  const INITIAL_WALLET_AMOUNT = 10000;
+  const AMOUNT = 1000;
   let tokenType;
   let walletOwnerKeypair;
   let wallet;
+  let transaction;
+  let receiverKeypair;
 
   beforeEach(async (done) => {
     walletOwnerKeypair = StellarSdk.Keypair.random();
+    receiverKeypair = StellarSdk.Keypair.random();
+    const senderPrivate = walletOwnerKeypair._secretKey;
+    const messageObj = {
+      fromAddress: walletOwnerKeypair.publicKey(),
+      toAddress: receiverKeypair.publicKey(),
+      amount: AMOUNT
+    };
+    const signed = signObject(messageObj, senderPrivate);
+    messageObj.signed = signed;
+
     tokenType = await TokenType.create({
       Name: 'tokenName',
       ExpiryDate: '2020',
@@ -21,46 +35,26 @@ describe('transactions Controller', () => {
     wallet = await Wallet.create({
       wallet_uuid: walletOwnerKeypair.publicKey(),
       tokentype_uuid: tokenType.uuid,
-      balance: 10000,
+      balance: INITIAL_WALLET_AMOUNT,
     });
-    done();
+    const localStoreResolve = async (res) => {
+      transaction = res;
+      done();
+    }
+    await transactions.create({
+      body: messageObj,
+      params: {tokentype_uuid: tokenType.uuid}
+    }, new psuedoRes(localStoreResolve));
   });
 
   afterEach(async (done) => {
     await TokenType.destroy({where: {}});
     await Wallet.destroy({where: {}});
+    await Transaction.destroy({where: {}});
     done();
   });
 
   describe('create', () => {
-    let transaction;
-    const AMOUNT = 1000;
-    let receiverKeypair;
-
-    beforeEach(async (done) => {
-      receiverKeypair = StellarSdk.Keypair.random();
-      const senderPrivate = walletOwnerKeypair._secretKey;
-      const messageObj = {
-        fromAddress: walletOwnerKeypair.publicKey(),
-        toAddress: receiverKeypair.publicKey(),
-        amount: AMOUNT
-      };
-      const signed = signObject(messageObj, senderPrivate);
-      messageObj.signed = signed;
-      const localStoreResolve = (res) => {
-        transaction = res;
-        done();
-      }
-      await transactions.create({
-        body: messageObj,
-        params: {tokentype_uuid: tokenType.uuid}
-      }, new psuedoRes(localStoreResolve));
-    });
-
-    afterEach(async (done) => {
-      await Transaction.destroy({where: {}});
-      done();
-    });
 
     it('returns a transaction with correct properties', () => {
       const transactionObject = transaction.txn;
@@ -78,13 +72,34 @@ describe('transactions Controller', () => {
       done();
     });
 
-    // it ('modifies wallet......TODO', async (done) => {
-    //
-    //   done();
-    // })
+    it ('adds balance to the receiver wallet balance', async (done) => {
+      const retrievedReceiverWallet =
+        await Wallet.findOne({where: {
+          wallet_uuid: receiverKeypair.publicKey()
+        }});
+      expect(retrievedReceiverWallet.balance).toBe(AMOUNT);
+      done();
+    });
+
+    it ('subtracts balance from sender wallet balance', async (done) => {
+      const senderWallet =
+        await Wallet.findOne({where: {
+          wallet_uuid: walletOwnerKeypair.publicKey()
+        }});
+      expect(senderWallet.balance).toBe(INITIAL_WALLET_AMOUNT - AMOUNT);
+      done();
+    });
   });
 
-  // describe('list', () => {
-  //
-  // });
+  describe('list', () => {
+    it('returns all transactions', async (done) => {
+      const tests = (res) => {
+        const trans = res[0];
+        expect(trans.uuid).toBe(transaction.txn.uuid);
+        done();
+      };
+      await transactions.list({}, new psuedoRes(tests));
+    })
+  });
+
 });

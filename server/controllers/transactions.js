@@ -8,7 +8,7 @@ module.exports = {
     let data;
     let dec = function(s) {
       if (typeof atob === 'undefined') {
-        return new Uint8Array(Array.prototype.slice.call(new Buffer(s, 'base64'), 0));
+        return new Uint8Array(Array.prototype.slice.call(Buffer.from(s, 'base64'), 0));
       } else {
         let i, d = atob(s), b = new Uint8Array(d.length);
         for (i = 0; i < d.length; i++) b[i] = d.charCodeAt(i);
