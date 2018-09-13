@@ -3,6 +3,7 @@ const Transaction = require('../models').Transaction;
 const Wallet = require('../models').Wallet;
 const nacl = require('tweetnacl');
 const StellarSdk = require('stellar-sdk');
+const dec = require('../utils/dec.js');
 
 module.exports = {
   create(req, res) {
@@ -69,15 +70,6 @@ module.exports = {
   //       }],
   //     })
   //     .then(tokentype => {
-  //       let dec = function(s) {
-  //         if (typeof atob === 'undefined') {
-  //           return new Uint8Array(Array.prototype.slice.call(Buffer.from(s, 'base64'), 0));
-  //         } else {
-  //           let i, d = atob(s), b = new Uint8Array(d.length);
-  //           for (i = 0; i < d.length; i++) b[i] = d.charCodeAt(i);
-  //           return b;
-  //         }
-  //       };
   //       // get the wallet from the public key string, so we can use the Uint8array version of public key for verification
   //       const verifying_wallet = StellarSdk.Keypair.fromPublicKey(req.body.publicKey);
   //       // remake the message string from the parameters
