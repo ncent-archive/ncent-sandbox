@@ -33,11 +33,14 @@ DB_PORT=5432
 psql -U postgres
 postgres=# SHOW config_file;
 ```
-Navigate to your config file and change...
+Navigate to your pg_hba.conf file and add this line:
+`host    ncent-db        all             172.17.0.0/16           trust`
+Navigate to your postgresql.conf file and change the following:
+`#listen_addresses = 'localhost'` to `#listen_addresses = '*'`
 
 #### Run a Postgres server and build/run the sandbox docker image
-
-```
+```bash
+createdb ncent-db
 sh execDockerSetup.sh
 ```
 
@@ -70,7 +73,16 @@ docker rm -f sandboxContainer
 #### Run tests
 
 ```
-sh execTests.sh
+dropdb ncent-db
+createdb ncent-db
+```
+Navigate to your server folder and run:
+```
+../node_modules/.bin/sequelize db:migrate
+```
+Navigate to your main directory and run:
+```
+npm run test
 ```
 
 ### Accessing the Sandbox Remotely

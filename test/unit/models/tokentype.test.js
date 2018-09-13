@@ -10,7 +10,7 @@ describe('TokenType model', async () => {
   beforeEach(async (done) => {
     const keypair = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
-      Name: 'Static',
+      Name: 'tokenName',
       ExpiryDate: '2020',
       sponsor_uuid: keypair.publicKey(),
       totalTokens: 10000,

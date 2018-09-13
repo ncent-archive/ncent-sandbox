@@ -45,7 +45,7 @@ module.exports = {
       }
       return senderWallets[0].update({
         balance: parseInt(senderWallets[0].balance, 10) - parseInt(req.body.amount, 10),
-      })
+      });
     })
     .then(function(updatedSdrWallets) {
       data = {sender: updatedSdrWallets};
@@ -54,7 +54,7 @@ module.exports = {
           wallet_uuid: req.body.toAddress,
           tokentype_uuid: req.params.tokentype_uuid,
         }
-      })
+      });
     })
     .then(function(receiverWallets) {
       if (!receiverWallets || receiverWallets.length < 1 ) {
@@ -62,7 +62,7 @@ module.exports = {
         .create({
           wallet_uuid: req.body.toAddress,
           tokentype_uuid: req.params.tokentype_uuid,
-        })
+        });
       } else {
         return receiverWallets[0];
       }
@@ -70,7 +70,7 @@ module.exports = {
     .then(function(rspnse) {
       return rspnse.update({
         balance: parseInt(rspnse.balance, 10) + parseInt(req.body.amount, 10),
-      })
+      });
     })
     .then(function(updatedRecWallets) {
       data["receiver"] = updatedRecWallets;
@@ -79,7 +79,7 @@ module.exports = {
         fromAddress: req.body.fromAddress,
         toAddress: req.body.toAddress,
         tokentype_uuid: req.params.tokentype_uuid
-      })
+      });
     })
     .then(function(transaction) {
       data["txn"] = transaction;

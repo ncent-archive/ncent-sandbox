@@ -7,12 +7,12 @@ const Wallet = db.Wallet;
 describe('wallets Controller', () => {
   let tokenType;
   let wallet;
+
   beforeEach(async (done) => {
     let keypair1 = StellarSdk.Keypair.random();
     let keypair2 = StellarSdk.Keypair.random();
-    let name = Math.random().toString(36).slice(2);
     tokenType = await TokenType.create({
-      Name: name,
+      Name: 'tokenName',
       ExpiryDate: '2020',
       sponsor_uuid: keypair1.publicKey(),
       totalTokens: 10000,
@@ -28,8 +28,6 @@ describe('wallets Controller', () => {
   afterEach(async (done) => {
     await Wallet.destroy({where: {}});
     await TokenType.destroy({where: {}});
-    tokenType = null;
-    wallet = null;
     done();
   });
 
@@ -48,7 +46,6 @@ describe('wallets Controller', () => {
         expect(testWallet.wallet_uuid).toBe(keypair.publicKey());
         expect(testWallet.tokentype_uuid).toBe(tokenType.uuid);
         expect(testWallet.balance).toBe(BALANCE);
-        await testWallet.destroy();
         done();
       }
       const testWallet = await wallets.create({
@@ -62,10 +59,11 @@ describe('wallets Controller', () => {
   });
 
   describe('listAll', () => {
-    it('successfully lists all created wallets', async (done) => {
+    it('returns all created wallets', async (done) => {
       const tests = (res) => {
-        console.log(res[0]);
-        expect(true).toBe(true);
+        const receivedWallet = res[0];
+        expect(receivedWallet).not.toBe(undefined);
+        expect(receivedWallet.uuid).toBe(wallet.uuid);
         done();
       }
       wallets.listAll({}, new psuedoRes(tests));
@@ -73,10 +71,36 @@ describe('wallets Controller', () => {
   });
 
   describe('listSome', () => {
-
+    it('returns wallets matching public key param', async (done) => {
+      const tests = (res) => {
+        const receivedWallet = res[0];
+        expect(receivedWallet).not.toBe(undefined);
+        expect(receivedWallet.uuid).toBe(wallet.uuid);
+        done();
+      }
+      wallets.listSome({
+        params: {
+          wallet_uuid: wallet.wallet_uuid
+        }
+      }, new psuedoRes(tests));
+    })
   });
 
   describe('retrieve', () => {
-
+    it('returns wallet matching public key + token params', async (done) => {
+      const tests = (res) => {
+        const receivedWallet = res[0];
+        expect(receivedWallet).not.toBe(undefined);
+        expect(receivedWallet.uuid).toBe(wallet.uuid);
+        done();
+      }
+      wallets.retrieve({
+        params: {
+          wallet_uuid: wallet.wallet_uuid,
+          tokentype_uuid: tokenType.uuid
+        }
+      }, new psuedoRes(tests));
+    })
   });
+
 });

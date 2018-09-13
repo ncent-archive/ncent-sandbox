@@ -13,7 +13,7 @@ describe('Transaction Model', async () => {
     const keypair1 = StellarSdk.Keypair.random();
     const keypair2 = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
-      Name: 'Static',
+      Name: 'tokenName',
       ExpiryDate: '2020',
       sponsor_uuid: keypair1.publicKey(),
       totalTokens: 10000,

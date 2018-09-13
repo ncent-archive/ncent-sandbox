@@ -12,7 +12,7 @@ describe('Wallet Model', () => {
   beforeEach(async (done) => {
     const keypair1 = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
-      Name: Math.random().toString(36).slice(2),
+      Name: 'tokenName',
       ExpiryDate: '2020',
       sponsor_uuid: keypair1.publicKey(),
       totalTokens: 10000,
