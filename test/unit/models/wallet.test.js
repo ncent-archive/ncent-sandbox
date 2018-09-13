@@ -1,7 +1,6 @@
 const db = require('../../../server/models');
 const TokenType = db.TokenType;
 const Wallet = db.Wallet;
-const Transaction = db.Transaction;
 const StellarSdk = require('stellar-sdk');
 
 describe('Wallet Model', () => {
@@ -11,7 +10,7 @@ describe('Wallet Model', () => {
   let walletTemplate;
 
   beforeEach(async (done) => {
-    const keypair1 = Object.freeze(StellarSdk.Keypair.random());
+    const keypair1 = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
       Name: Math.random().toString(36).slice(2),
       ExpiryDate: '2020',
@@ -29,8 +28,8 @@ describe('Wallet Model', () => {
   });
 
   afterEach(async (done) => {
-    await tokenType.destroy();
-    await wallet.destroy();
+    await Wallet.destroy({where: {}});
+    await TokenType.destroy({where: {}});
     done();
   });
 

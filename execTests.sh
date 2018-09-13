@@ -1,6 +1,6 @@
-dropdb ncent-db > /dev/null
-createdb ncent-db > /dev/null
+# dropdb ncent-db > /dev/null
+# createdb ncent-db > /dev/null
+# ../node_modules/.bin/sequelize db:migrate
 cd server
-../node_modules/.bin/sequelize db:migrate
 cd ..
 npm run test

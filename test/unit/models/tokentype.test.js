@@ -3,14 +3,14 @@ const TokenType = db.TokenType;
 const Transaction = db.Transaction;
 const StellarSdk = require('stellar-sdk');
 
-describe('TokenType model', () => {
+describe('TokenType model', async () => {
   let tokenType;
   let tokenTypeTemplate;
 
   beforeEach(async (done) => {
     const keypair = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
-      Name: Math.random().toString(36).slice(2),
+      Name: 'Static',
       ExpiryDate: '2020',
       sponsor_uuid: keypair.publicKey(),
       totalTokens: 10000,
@@ -20,7 +20,8 @@ describe('TokenType model', () => {
   });
 
   afterEach(async (done) => {
-    await tokenType.destroy();
+    await Transaction.destroy({where: {}});
+    await TokenType.destroy({where: {}});
     done();
   });
 
@@ -57,7 +58,7 @@ describe('TokenType model', () => {
         model: Transaction,
         as: 'transactions',
       }],
-    })
+    });
     const retrievedTransaction = tokenWithTransactions['transactions'][0];
     expect (retrievedTransaction.tokentype_uuid).toBe(tokenType.uuid);
     done();
