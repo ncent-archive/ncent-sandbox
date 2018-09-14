@@ -26,6 +26,7 @@ DB_USERNAME=postgres
 DB_PASSWORD=dickey
 DB_HOST=docker.for.mac.host.internal
 DB_PORT=5432
+VERSION=local_v
 ```
 
 #### Configure postgres

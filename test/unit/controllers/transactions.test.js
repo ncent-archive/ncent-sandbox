@@ -90,47 +90,33 @@ describe('transactions Controller', () => {
 
   describe('retrieveProvenanceChain', () => {
     it('returns an accurate provenance chain', async (done) => {
-      const receiver2Keypair = StellarSdk.Keypair.random();
-      const sender2Private = receiverKeypair._secretKey;
-      const tests = (provenanceChain) => {
-        expect(provenanceChain.length).toBe(2);
-        const firstTransaction = provenanceChain[0];
-        const secondTransaction = provenanceChain[1];
-        expect(firstTransaction.amount).toBe(AMOUNT);
-        expect(secondTransaction.amount).toBe(AMOUNT);
-        expect(firstTransaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
-        expect(firstTransaction.toAddress).toBe(receiverKeypair.publicKey());
-        expect(secondTransaction.fromAddress).toBe(receiverKeypair.publicKey());
-        expect(secondTransaction.toAddress).toBe(receiver2Keypair.publicKey());
-        expect(firstTransaction.tokentype_uuid).toBe(tokenType.uuid);
-        expect(secondTransaction.tokentype_uuid).toBe(tokenType.uuid);
-        done();
-      };
-      const messageObj = {
-        fromAddress: receiverKeypair.publicKey(),
-        toAddress: receiver2Keypair.publicKey(),
-        amount: AMOUNT
-      };
-      const signed = signObject(messageObj, sender2Private);
-      let newestTransaction;
-      messageObj.signed = signed;
-      await transactions.create(
-        {
-          body: messageObj,
-          params: { tokentype_uuid: tokenType.uuid }
-        },
-          new psuedoRes(async (res) => {
-            newestTransaction = res;
-            await transactions.retrieveProvenanceChain({
-              body: {
-                wallet_uuid: receiver2Keypair.publicKey()
-              },
-              params: {
-                tokentype_uuid: tokenType.uuid
-              }
-            }, new psuedoRes(tests));
+        const tHandler = async (transactionObject) => {
+          // const newTransaction = transactionObject.transaction;
+          const newReceiverKeypair = transactionObject.receiverKeypair;
+          const tests = (provenanceChain) => {
+            expect(provenanceChain.length).toBe(2);
+            const firstTransaction = provenanceChain[0];
+            const secondTransaction = provenanceChain[1];
+            expect(firstTransaction.amount).toBe(AMOUNT);
+            expect(secondTransaction.amount).toBe(AMOUNT);
+            expect(firstTransaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
+            expect(firstTransaction.toAddress).toBe(receiverKeypair.publicKey());
+            expect(secondTransaction.fromAddress).toBe(receiverKeypair.publicKey());
+            expect(secondTransaction.toAddress).toBe(newReceiverKeypair.publicKey());
+            expect(firstTransaction.tokentype_uuid).toBe(tokenType.uuid);
+            expect(secondTransaction.tokentype_uuid).toBe(tokenType.uuid);
+            done();
+          };
+        await transactions.retrieveProvenanceChain({
+          body: {
+            wallet_uuid: newReceiverKeypair.publicKey()
+          },
+          params: {
+            tokentype_uuid: tokenType.uuid
           }
-      ));
+        }, new psuedoRes(tests));
+      };
+      createTestTransaction(receiverKeypair, tokenType.uuid, AMOUNT, tHandler);
     });
     it('throws an error when given an invalid token_uuid', async (done) => {
       const tests = (res) => {
