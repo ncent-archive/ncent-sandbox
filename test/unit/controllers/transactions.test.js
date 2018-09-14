@@ -153,15 +153,26 @@ describe('transactions Controller', () => {
       };
       await transactions.retrieveProvenanceChain({
         body: {
-          wallet_uuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+          wallet_uuid: walletOwnerKeypair.publicKey()
         },
         params: {
           tokentype_uuid: '44444444-4444-4444-4444-444444444444'
         }
       }, new psuedoRes(tests));
     });
-    it('throws an error when given an invalid wallet_uuid', () => {
-
+    it('throws an error when given an invalid wallet_uuid', async (done) => {
+      const tests = (res) => {
+        expect(res.message).not.toBe(undefined);
+        done();
+      };
+      await transactions.retrieveProvenanceChain({
+        body: {
+          wallet_uuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+        },
+        params: {
+          tokentype_uuid: tokenType.uuid
+        }
+      }, new psuedoRes(tests));
     })
   });
 
