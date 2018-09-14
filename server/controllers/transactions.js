@@ -117,8 +117,8 @@ module.exports = {
       .catch(error => res.status(400).send(error));
   },
 
-  async retrieveProvenanceChain({ body, params }, res) {
-    const walletUuid = body.wallet_uuid;
+  async retrieveProvenanceChain({ params }, res) {
+    const walletUuid = params.wallet_uuid;
     const tokenUuid = params.tokentype_uuid;
     const transactionChain = [];
     // Transaction chain order: (genesis -> ... -> redeemer)

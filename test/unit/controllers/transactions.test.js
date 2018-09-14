@@ -91,12 +91,13 @@ describe('transactions Controller', () => {
   describe('retrieveProvenanceChain', () => {
     it('returns an accurate provenance chain', async (done) => {
         const tHandler = async (transactionObject) => {
-          // const newTransaction = transactionObject.transaction;
+          const newTransaction = transactionObject.transaction.txn;
           const newReceiverKeypair = transactionObject.receiverKeypair;
           const tests = (provenanceChain) => {
             expect(provenanceChain.length).toBe(2);
             const firstTransaction = provenanceChain[0];
             const secondTransaction = provenanceChain[1];
+            expect(secondTransaction.uuid).toBe(newTransaction.uuid);
             expect(firstTransaction.amount).toBe(AMOUNT);
             expect(secondTransaction.amount).toBe(AMOUNT);
             expect(firstTransaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
@@ -108,10 +109,8 @@ describe('transactions Controller', () => {
             done();
           };
         await transactions.retrieveProvenanceChain({
-          body: {
-            wallet_uuid: newReceiverKeypair.publicKey()
-          },
           params: {
+            wallet_uuid: newReceiverKeypair.publicKey(),
             tokentype_uuid: tokenType.uuid
           }
         }, new psuedoRes(tests));
@@ -124,10 +123,8 @@ describe('transactions Controller', () => {
         done();
       };
       await transactions.retrieveProvenanceChain({
-        body: {
-          wallet_uuid: walletOwnerKeypair.publicKey()
-        },
         params: {
+          wallet_uuid: walletOwnerKeypair.publicKey(),
           tokentype_uuid: '44444444-4444-4444-4444-444444444444'
         }
       }, new psuedoRes(tests));
@@ -138,10 +135,8 @@ describe('transactions Controller', () => {
         done();
       };
       await transactions.retrieveProvenanceChain({
-        body: {
-          wallet_uuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-        },
         params: {
+          wallet_uuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
           tokentype_uuid: tokenType.uuid
         }
       }, new psuedoRes(tests));
