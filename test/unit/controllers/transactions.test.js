@@ -104,12 +104,22 @@ describe('transactions Controller', () => {
 
   describe('retrieveProvenanceChain', () => {
     it('returns an accurate provenance chain', async (done) => {
-      const tests = (provenanceChain) => {
-        console.log(provenanceChain);
-        done();
-      };
       const receiver2Keypair = StellarSdk.Keypair.random();
       const sender2Private = receiverKeypair._secretKey;
+      const tests = (provenanceChain) => {
+        expect(provenanceChain.length).toBe(2);
+        const firstTransaction = provenanceChain[0];
+        const secondTransaction = provenanceChain[1];
+        expect(firstTransaction.amount).toBe(AMOUNT);
+        expect(secondTransaction.amount).toBe(AMOUNT);
+        expect(firstTransaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
+        expect(firstTransaction.toAddress).toBe(receiverKeypair.publicKey());
+        expect(secondTransaction.fromAddress).toBe(receiverKeypair.publicKey());
+        expect(secondTransaction.toAddress).toBe(receiver2Keypair.publicKey());
+        expect(firstTransaction.tokentype_uuid).toBe(tokenType.uuid);
+        expect(secondTransaction.tokentype_uuid).toBe(tokenType.uuid);
+        done();
+      };
       const messageObj = {
         fromAddress: receiverKeypair.publicKey(),
         toAddress: receiver2Keypair.publicKey(),
@@ -136,6 +146,23 @@ describe('transactions Controller', () => {
           }
       ));
     });
+    it('throws an error when given an invalid token_uuid', async (done) => {
+      const tests = (res) => {
+        expect(res.message).not.toBe(undefined);
+        done();
+      };
+      await transactions.retrieveProvenanceChain({
+        body: {
+          wallet_uuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+        },
+        params: {
+          tokentype_uuid: '44444444-4444-4444-4444-444444444444'
+        }
+      }, new psuedoRes(tests));
+    });
+    it('throws an error when given an invalid wallet_uuid', () => {
+
+    })
   });
 
 });

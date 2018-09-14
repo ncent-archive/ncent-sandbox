@@ -1,5 +1,6 @@
 const Transaction = require('../models').Transaction;
 const Wallet = require('../models').Wallet;
+const TokenType = require('../models').TokenType;
 const nacl = require('tweetnacl');
 const StellarSdk = require('stellar-sdk');
 const dec = require('../utils/dec.js');
@@ -121,15 +122,26 @@ module.exports = {
     const walletUuid = body.wallet_uuid;
     const tokenUuid = params.tokentype_uuid;
     const transactionChain = [];
+    // We are unshifting into the transaction chain so that it goes from genesis -> redeeming node
+    const tokenTypeExists = await TokenType.findById(tokenUuid);
+    const walletExists = await Wallet.findOne({where: {
+      wallet_uuid: walletUuid
+    }});
+    if (!tokenTypeExists) {
+      return res.status(404).send({ message: "tokentype_uuid is invalid" });
+    }
+    if (!walletExists) {
+      return res.status(404).send({ message: "wallet_uuid is invalid"});
+    }
     let txn = await getOldestTransaction(walletUuid, tokenUuid);
     while (txn) {
-      transactionChain.push(txn.dataValues);
+      transactionChain.unshift(txn.dataValues);
       txn = await getOldestTransaction(txn['fromAddress'], tokenUuid);
     }
     if (transactionChain.length === 0) {
       return res.status(400).send({
         message: "The genesis node does not have a provenance chain"
-      })
+      });
     } else {
       return res.status(200).send(transactionChain);
     }
