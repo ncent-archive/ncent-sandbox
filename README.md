@@ -4,15 +4,15 @@
 - [Endpoint Documentation](#endpoints-documentation)
 
 ## Introduction
-The nCent Sandbox allows you to run a server that mimics the nCent Core Protocol. In its current stage, it stores the information on the tokentypes, transactions and wallets on a (PostgreSQL) database. 
+The nCent Sandbox allows you to run a server that mimics the nCent Core Protocol. In its current stage, it stores the information on the tokentypes, transactions and wallets on a (PostgreSQL) database.
 
-The Sandbox API is detailed [here](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/routes/index.js). 
+The Sandbox API is detailed [here](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/routes/index.js).
 
-The request handling is implemented in the [controllers directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/controllers). 
+The request handling is implemented in the [controllers directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/controllers).
 
-The database schema and migrations are handled in the [models directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/models) and [migrations directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/migrations), respectively. 
+The database schema and migrations are handled in the [models directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/models) and [migrations directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/migrations), respectively.
 
-The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/config/config.js) handles the location and details of the database. 
+The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/config/config.js) handles the location and details of the database.
 
 ## Installation
 
@@ -20,17 +20,28 @@ The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbo
 
 First install docker locally: https://www.docker.com/products/docker-desktop
 
-#### Run a Postgres server first
-
+#### Create a secret.env
 ```
-docker run --name ncent-postgres -e POSTGRES_PASSWORD=ncent -d postgres
+DB_USERNAME=postgres
+DB_PASSWORD=dickey
+DB_HOST=docker.for.mac.host.internal
+DB_PORT=5432
 ```
 
-#### Build and run the sandbox docker image
-
+#### Configure postgres
 ```
-docker build . -t ncent/ncent-sandbox
-docker run --rm -p 8010:8010 --name sandbox --link ncent-postgres:ncent-postgres -it -d ncent/ncent-sandbox
+psql -U postgres
+postgres=# SHOW config_file;
+```
+Navigate to your pg_hba.conf file and add this line:
+`host    ncent-db        all             172.17.0.0/16           trust`
+Navigate to your postgresql.conf file and change the following:
+`#listen_addresses = 'localhost'` to `#listen_addresses = '*'`
+
+#### Run a Postgres server and build/run the sandbox docker image
+```bash
+createdb ncent-db
+sh execDockerSetup.sh
 ```
 
 #### Access the sandbox apis
@@ -50,15 +61,28 @@ curl http://localhost:8010/api/wallets
 To view the logs of the docker container:
 
 ```
-docker logs ncent-postgres
-docker logs sandbox
+docker logs sandboxContainer
 ```
 
-#### Stop the containers
+#### Stop the container
 
 ```
-docker rm -f sandbox
-docker rm -f ncent-postgres
+docker rm -f sandboxContainer
+```
+
+#### Run tests
+
+```
+dropdb ncent-db
+createdb ncent-db
+```
+Navigate to your server folder and run:
+```
+../node_modules/.bin/sequelize db:migrate
+```
+Navigate to your main directory and run:
+```
+npm run test
 ```
 
 ### Accessing the Sandbox Remotely
@@ -93,7 +117,7 @@ None
 - - - -
 
 
-## Get Specific Wallet 
+## Get Specific Wallet
 #### `GET /wallets/{wallet_uuid}`
 #### Description:
 Retrieve information about a specific wallet
@@ -139,7 +163,7 @@ Name  | Type | Description
 sponsor_uuid | String | Valid wallet public key of token sponsor
 Name | String | Token Name
 totalTokens | Int | Number of tokens to be stamped
-ExpiryDate | Date Object | The expiration date of the tokens stamped into existance 
+ExpiryDate | Date Object | The expiration date of the tokens stamped into existance
 
 - - - -
 <br />
@@ -176,29 +200,10 @@ None
 
 - - - -
 
-## Destroy Tokens
-#### `PUT /tokentypes/{tokentype_uuid}`
-#### Description:
-List information about a specific token type
-#### Parameters:
-Name  | Type | Description
---- | --- | ---
-tokentype_uuid | String | Unique identifier for a specific token type
-#### Body:
-Name  | Type | Description
---- | --- | ---
-ExpiryDate | Date Object | Updated expiration date for a specific token type
-signed | String | JSON string of signed message object
-
-- - - -
-<br />
-
-- - - -
-
 ## Transfer Tokens
 #### `POST /tokentypes/{tokentype_uuid}/items`
 #### Description:
-Transfer tokens from one account to another. Must be 
+Transfer tokens from one account to another. Must be
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
@@ -258,7 +263,7 @@ None
 	- From Wallet Address
 	- To Wallet Address
 	- TokenType_UUID (Foreign Key)
- 
+
 3.  Wallet:
 	- UUID
 	- Wallet_UUID

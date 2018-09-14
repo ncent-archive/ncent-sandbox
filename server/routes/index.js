@@ -9,7 +9,7 @@ module.exports = (app) => {
     app.post('/api/tokentypes', tokentypesController.create);
     app.get('/api/tokentypes', tokentypesController.list);
     app.get('/api/tokentypes/:tokentype_uuid', tokentypesController.retrieve);
-    app.put('/api/tokentypes/:tokentype_uuid', tokentypesController.update);
+    // app.put('/api/tokentypes/:tokentype_uuid', tokentypesController.update);
     app.post('/api/tokentypes/:tokentype_uuid/items', transactionsController.create);
     app.get('/api/tokentypes/:tokentype_uuid/items', transactionsController.list);
 

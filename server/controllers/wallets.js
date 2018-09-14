@@ -36,6 +36,7 @@ module.exports = {
       })
       .catch(error => res.status(400).send(error));
   },
+  // TODO modify retrieve function to use findOne instead of findAll
   retrieve(req, res) {
     return Wallet
     .findAll({

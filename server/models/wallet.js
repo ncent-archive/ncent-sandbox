@@ -11,13 +11,10 @@ module.exports = (sequelize, DataTypes) => {
     wallet_uuid: {
 	    type:DataTypes.STRING,
       allowNull: false
-      //type: DataTypes.UUID,
-      //defaultValue: DataTypes.UUIDV4,
     },
     tokentype_uuid: {
       type: DataTypes.UUID,
       allowNull: false,
-      defaultValue: '498cc1fe-62d3-4863-a0e0-a42049b90fff'
       // validate: {
       //   exists: function(value) {
       //     console.log(value);
@@ -45,4 +42,4 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
   return Wallet;
-}
+};
