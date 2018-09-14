@@ -1,9 +1,7 @@
 const StellarSdk = require('stellar-sdk');
 const transactions = require('../../../server/controllers').transactions;
-const db = require('../../../server/models')
-const TokenType = db.TokenType;
-const Wallet = db.Wallet;
-const Transaction = db.Transaction;
+const db = require('../../../server/models');
+const { TokenType, Wallet, Transaction } = db;
 
 describe('transactions Controller', () => {
   const INITIAL_WALLET_AMOUNT = 10000;
@@ -16,16 +14,6 @@ describe('transactions Controller', () => {
 
   beforeEach(async (done) => {
     walletOwnerKeypair = StellarSdk.Keypair.random();
-    receiverKeypair = StellarSdk.Keypair.random();
-    const senderPrivate = walletOwnerKeypair._secretKey;
-    const messageObj = {
-      fromAddress: walletOwnerKeypair.publicKey(),
-      toAddress: receiverKeypair.publicKey(),
-      amount: AMOUNT
-    };
-    const signed = signObject(messageObj, senderPrivate);
-    messageObj.signed = signed;
-
     tokenType = await TokenType.create({
       Name: 'tokenName',
       ExpiryDate: '2020',
@@ -37,14 +25,12 @@ describe('transactions Controller', () => {
       tokentype_uuid: tokenType.uuid,
       balance: INITIAL_WALLET_AMOUNT,
     });
-    const localStoreResolve = async (res) => {
-      transaction = res;
+    const tHandler = (transactionObject) => {
+      transaction = transactionObject.transaction;
+      receiverKeypair = transactionObject.receiverKeypair;
       done();
-    }
-    await transactions.create({
-      body: messageObj,
-      params: {tokentype_uuid: tokenType.uuid}
-    }, new psuedoRes(localStoreResolve));
+    };
+    createTestTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
   });
 
   afterEach(async (done) => {
@@ -173,7 +159,13 @@ describe('transactions Controller', () => {
           tokentype_uuid: tokenType.uuid
         }
       }, new psuedoRes(tests));
-    })
+    });
+    it('reliably follows FIFO when determining provenance chain', async (done) => {
+      // Use current setup + 2 or 3 test transactions
+      // TODO Create a situation with same token distributed by many people
+      done();
+    });
+    // TODO create test for multiple token types having provenance tracked
   });
 
 });
