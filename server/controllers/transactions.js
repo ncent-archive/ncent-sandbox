@@ -4,6 +4,18 @@ const nacl = require('tweetnacl');
 const StellarSdk = require('stellar-sdk');
 const dec = require('../utils/dec.js');
 
+const getOldestTransaction = async (walletUuid, tokenUuid) => {
+  const transaction = await Transaction.findAll({
+    where: {
+      toAddress: walletUuid,
+      tokentype_uuid: tokenUuid
+    },
+    limit: 1,
+    order: [['updatedAt', 'ASC']]
+  });
+  return transaction[0];
+};
+
 module.exports = {
   create({ body, params }, res) {
     let data;
@@ -96,6 +108,7 @@ module.exports = {
       }
     });
   },
+
   list(req, res) {
     return Transaction
       .findAll({
@@ -103,4 +116,22 @@ module.exports = {
       .then(transactions => res.status(200).send(transactions))
       .catch(error => res.status(400).send(error));
   },
+
+  async retrieveProvenanceChain({body, params}, res) {
+    const walletUuid = body.wallet_uuid;
+    const tokenUuid = params.tokentype_uuid;
+    const transactionChain = [];
+    let txn = await getOldestTransaction(walletUuid, tokenUuid);
+    while (txn) {
+      transactionChain.push(txn.dataValues);
+      txn = await getOldestTransaction(txn['fromAddress'], tokenUuid);
+    }
+    if (transactionChain.length === 0) {
+      return res.status(400).send({
+        message: "The genesis node does not have a provenance chain"
+      })
+    } else {
+      return res.status(200).send(transactionChain);
+    }
+  }
 };

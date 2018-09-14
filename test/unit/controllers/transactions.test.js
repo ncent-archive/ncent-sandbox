@@ -72,7 +72,7 @@ describe('transactions Controller', () => {
       done();
     });
 
-    it ('adds balance to the receiver wallet balance', async (done) => {
+    it('adds balance to the receiver wallet balance', async (done) => {
       const retrievedReceiverWallet =
         await Wallet.findOne({where: {
           wallet_uuid: receiverKeypair.publicKey()
@@ -81,7 +81,7 @@ describe('transactions Controller', () => {
       done();
     });
 
-    it ('subtracts balance from sender wallet balance', async (done) => {
+    it('subtracts balance from sender wallet balance', async (done) => {
       const senderWallet =
         await Wallet.findOne({where: {
           wallet_uuid: walletOwnerKeypair.publicKey()
@@ -100,6 +100,42 @@ describe('transactions Controller', () => {
       };
       await transactions.list({}, new psuedoRes(tests));
     })
+  });
+
+  describe('retrieveProvenanceChain', () => {
+    it('returns an accurate provenance chain', async (done) => {
+      const tests = (provenanceChain) => {
+        console.log(provenanceChain);
+        done();
+      };
+      const receiver2Keypair = StellarSdk.Keypair.random();
+      const sender2Private = receiverKeypair._secretKey;
+      const messageObj = {
+        fromAddress: receiverKeypair.publicKey(),
+        toAddress: receiver2Keypair.publicKey(),
+        amount: AMOUNT
+      };
+      const signed = signObject(messageObj, sender2Private);
+      let newestTransaction;
+      messageObj.signed = signed;
+      await transactions.create(
+        {
+          body: messageObj,
+          params: { tokentype_uuid: tokenType.uuid }
+        },
+          new psuedoRes(async (res) => {
+            newestTransaction = res;
+            await transactions.retrieveProvenanceChain({
+              body: {
+                wallet_uuid: receiver2Keypair.publicKey()
+              },
+              params: {
+                tokentype_uuid: tokenType.uuid
+              }
+            }, new psuedoRes(tests));
+          }
+      ));
+    });
   });
 
 });
