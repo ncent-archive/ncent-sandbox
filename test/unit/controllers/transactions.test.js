@@ -141,12 +141,5 @@ describe('transactions Controller', () => {
         }
       }, new psuedoRes(tests));
     });
-    it('reliably follows FIFO when determining provenance chain', async (done) => {
-      // Use current setup + 2 or 3 test transactions
-      // TODO Create a situation with same token distributed by many people
-      done();
-    });
-    // TODO create test for multiple token types having provenance tracked
   });
-
 });
