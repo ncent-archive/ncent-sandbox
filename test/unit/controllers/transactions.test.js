@@ -124,7 +124,6 @@ describe('transactions Controller', () => {
         const newTransaction = transactionObject.transaction.txn;
         const newReceiverKeypair = transactionObject.receiverKeypair;
         const tests = (provenanceChain) => {
-          console.log(provenanceChain);
           expect(provenanceChain.length).toBe(2);
           const firstTransaction = provenanceChain[0];
           const secondTransaction = provenanceChain[1];
