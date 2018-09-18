@@ -170,7 +170,7 @@ const transactionsController = {
     // -> [challengeTransaction, transaction2...transaction]
     // array of transactions leading to transaction w/ transactionUuid
   async provenanceChain({params}, res) {
-    let transaction = await Transaction.findById(params.transaction_uuid);
+    let transaction = await Transaction.findById(params.transactionUuid);
     if (!transaction) {
       return res.status(404).send({ message: "transactionUuid is invalid" });
     }

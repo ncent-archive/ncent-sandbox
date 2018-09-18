@@ -22,7 +22,6 @@ describe('Transaction Model', async () => {
     transactionTemplate = {
       tokentype_uuid: tokenType.uuid,
       amount: Math.floor(Math.random() * 1000) + 1,
-      parentTransaction: "00000000-0000-0000-0000-000000000000",
       fromAddress: keypair1.publicKey(),
       toAddress: keypair2.publicKey(),
     };
