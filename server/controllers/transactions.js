@@ -5,17 +5,31 @@ const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec.js");
 
+const GENESIS_PARENT_UUID = "00000000-0000-0000-0000-000000000000";
+
 const getOldestTransaction = async (walletUuid, tokenUuid) => {
-  const transaction = await Transaction.findAll({
-    where: {
-      toAddress: walletUuid,
-      tokentype_uuid: tokenUuid
-    },
-    limit: 1,
-    order: [["updatedAt", "ASC"]]
-  });
-  return transaction[0];
+  // TODO modify this function to find earliest that is not 
+  // const transaction = await Transaction.findAll({
+  //   where: {
+  //     toAddress: walletUuid,
+  //     tokentype_uuid: tokenUuid
+  //   },
+  //   limit: 1,
+  //   order: [["updatedAt", "ASC"]]
+  // });
+  // return transaction[0];
 };
+
+const getProvenanceChain = async (transactionUuid) => {
+  const transactionChain = [];
+  // Transaction chain order: (genesis -> ... -> redeemer)
+  let transaction = await Transaction.findById(transactionUuid);
+  do {
+    transactionChain.unshift(transaction);
+    transaction = await Transaction.findById(transaction.parentTransaction);
+  } while (transaction);
+  return transactionChain;
+}
 
 module.exports = {
   async create({ body, params }, res) {
@@ -36,7 +50,7 @@ module.exports = {
     let parentTransactionUuid;
     if (tokenType.sponsor_uuid === fromAddress) {
       amount = parseInt(body.amount, 10);
-      parentTransactionUuid = "00000000-0000-0000-0000-000000000000";
+      parentTransactionUuid = GENESIS_PARENT_UUID;
       msg = dec(JSON.stringify({
         fromAddress,
         toAddress,
@@ -96,11 +110,9 @@ module.exports = {
       .catch(error => res.status(400).send(error));
   },
 
-  async retrieveProvenanceChain({ params }, res) {
+  async oldestProvenanceChain({ params }, res) {
     const walletUuid = params.wallet_uuid;
     const tokenUuid = params.tokentype_uuid;
-    const transactionChain = [];
-    // Transaction chain order: (genesis -> ... -> redeemer)
     const tokenTypeExists = await TokenType.findById(tokenUuid);
     const walletExists = await Wallet.findOne({
       where: {
@@ -113,17 +125,16 @@ module.exports = {
     if (!walletExists) {
       return res.status(404).send({ message: "wallet_uuid is invalid" });
     }
-    let txn = await getOldestTransaction(walletUuid, tokenUuid);
-    while (txn) {
-      transactionChain.unshift(txn.dataValues);
-      txn = await getOldestTransaction(txn["fromAddress"], tokenUuid);
+    const oldestTxn = await getOldestTransaction(walletUuid, tokenUuid);
+  },
+
+  async provenanceChain({ params }, res) {
+    // TODO check for invalid transactionUuid and throw error
+    let transaction = await Transaction.findById(params.transaction_uuid);
+    if (!transaction) {
+      return res.status(404).send({ message: "transactionUuid is invalid"});
     }
-    if (transactionChain.length === 0) {
-      return res.status(400).send({
-        message: "The genesis node does not have a provenance chain"
-      });
-    } else {
-      return res.status(200).send(transactionChain);
-    }
+    const transactionChain = await getProvenanceChain(params.transaction_uuid);
+    return res.status(200).send(transactionChain);
   }
 };

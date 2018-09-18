@@ -12,6 +12,8 @@ module.exports = (app) => {
     // app.put('/api/tokentypes/:tokentype_uuid', tokentypesController.update);
     app.post('/api/tokentypes/:tokentype_uuid/items', transactionsController.create);
     app.get('/api/tokentypes/:tokentype_uuid/items', transactionsController.list);
+    app.get("/api/transactions/:tokentype_uuid/:wallet_uuid", transactionsController.oldestProvenanceChain);
+    app.get("/api/transactions/:transaction_uuid", transactionsController.provenanceChain);
 
     //app.post('/api/wallets', walletsController.create);
     app.get('/api/wallets', walletsController.listAll);
@@ -20,7 +22,6 @@ module.exports = (app) => {
     //app.put('/api/wallets/:wallet_uuid/:tokentype_uuid', walletsController.update);
     // For any other request method on transactions, we're going to return "Method Not Allowed"
 
-    app.get("/api/transactions/:tokentype_uuid/:wallet_uuid", transactionsController.retrieveProvenanceChain);
 
     app.all('/api/todos/:todoId/items', (req, res) =>
         res.status(405).send({
