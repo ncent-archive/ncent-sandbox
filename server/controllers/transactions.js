@@ -54,7 +54,7 @@ const getWallet = async (publicKey, tokenTypeUuid) => {
 
 const getChildrenTransactions = async (parentTransaction) => {
   const childrenTransactions = await Transaction.findAll({
-    parentTransaction
+    where: { parentTransaction }
   });
   return childrenTransactions;
 }
@@ -95,7 +95,7 @@ const transactionsController = {
     if (!tokenType) {
       return res.status(404).send({ message: "TokenType not found" });
     }
-    if (!tokenType.sponsor_uuid === walletUuid) {
+    if (tokenType.sponsor_uuid !== walletUuid) {
       return res.status(404).send({message:"Wallet !== TokenType sponsor"});
     }
     const reconstructedObject = { amount };

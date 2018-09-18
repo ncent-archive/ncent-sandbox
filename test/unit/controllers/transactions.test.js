@@ -25,7 +25,7 @@ describe('transactions Controller', () => {
       balance: INITIAL_WALLET_AMOUNT,
     });
     const tHandler = (transactionObject) => {
-      transaction = transactionObject.transaction;
+      transaction = transactionObject;
       done();
     };
     createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
@@ -59,43 +59,82 @@ describe('transactions Controller', () => {
       expect(transactionObject.fromAddress).toBe(walletOwnerKeypair.publicKey());
       expect(transactionObject.toAddress).toBe(walletOwnerKeypair.publicKey());
     });
-    
-    // TODO add test to ensure only TokenType owner can use create
-    // TODO ensure create cannot be used with AMOUNT > wallet amount
+
     it('persists a created transaction to the database', async (done) => {
       const txn = await Transaction.findById(transaction.uuid);
       expect(txn).not.toBe(undefined);
       done();
     });
+    
+    it('does not create a transaction for a non-owner', async (done) => {
+      const nefariousKeypair = StellarSdk.Keypair.random();
+      const tHandler = (transactionObject) => {
+        expect(transactionObject.message).not.toBe(undefined); //message === err
+        done();
+      };
+      const nefariousWallet = await Wallet.create({
+        wallet_uuid: nefariousKeypair.publicKey(),
+        tokentype_uuid: tokenType.uuid,
+        balance: 0,
+      });
+      createOriginTransaction(nefariousKeypair, tokenType.uuid, AMOUNT, tHandler);
+    });
+    
+    it('does not create a transaction with amount > wallet amount', async (done) => {
+      const tHandler = (transactionObject) => {
+        expect(transactionObject.message).toBe('Inadequate wallet balance');
+        done();
+      }
+      createOriginTransaction(
+        walletOwnerKeypair, tokenType.uuid, INITIAL_WALLET_AMOUNT+1, tHandler
+      );
+    });
   });
 
   
-  // describe('share', () => {
-  //   beforeEach(async (done) => {
-
-  //   });
-  //   afterEach(async (done) => {
-
-  //   });
-
-  //   // it('adds balance to the receiver wallet balance', async (done) => {
-  //   //   const retrievedReceiverWallet =
-  //   //     await Wallet.findOne({where: {
-  //   //       wallet_uuid: receiverKeypair.publicKey()
-  //   //     }});
-  //   //   expect(retrievedReceiverWallet.balance).toBe(AMOUNT);
-  //   //   done();
-  //   // });
+  describe('share', () => {
+    let receiverKeypair;
+    beforeEach(async (done) => {
+      const handleShare = (sharedTransaction) => {
+        receiverKeypair = sharedTransaction.receiverKeypair;
+        done();
+      };
+      shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare);
+    });
   
-  //   // it('subtracts balance from sender wallet balance', async (done) => {
-  //   //   const senderWallet =
-  //   //     await Wallet.findOne({where: {
-  //   //       wallet_uuid: walletOwnerKeypair.publicKey()
-  //   //     }});
-  //   //   expect(senderWallet.balance).toBe(INITIAL_WALLET_AMOUNT - AMOUNT);
-  //   //   done();
-  //   // });
-  // })
+    afterEach(async (done) => {
+      await Transaction.destroy({ where: {} });
+      await Wallet.destroy({ where: {} });
+      done();
+    });
+
+    it ('only allows for sharing of owned transactions', async (done) => {
+      const handleShare = sharedTransaction => {
+        const msg = sharedTransaction.transaction.message;
+        expect(msg).toBe('This transaction has been transferred already');
+        done();
+      };
+      shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare);
+    });
+
+    it('adds balance to the receiver wallet balance', async (done) => {
+      const retrievedReceiverWallet =
+        await Wallet.findOne({where: {
+          wallet_uuid: receiverKeypair.publicKey()
+        }});
+      expect(retrievedReceiverWallet.balance).toBe(AMOUNT);
+      done();
+    });
+  
+    it('subtracts balance from sender wallet balance', async (done) => {
+      const senderWallet =
+        await Wallet.findOne({where: {
+          wallet_uuid: walletOwnerKeypair.publicKey()
+        }});
+      expect(senderWallet.balance).toBe(INITIAL_WALLET_AMOUNT - AMOUNT);
+      done();
+    });
+  })
 
 
   // describe('provenanceChain', () => {

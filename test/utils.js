@@ -10,7 +10,7 @@ const createOriginTransaction = async (senderKeypair, tokenId, amount, callback)
     body: messageObj,
     params: { walletUuid: senderKeypair.publicKey(), tokenTypeUuid: tokenId }
   }, new psuedoRes(async (resolvedTransaction) => {
-    callback({ transaction: resolvedTransaction});
+    callback(resolvedTransaction);
   }));
 };
 
