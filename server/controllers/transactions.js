@@ -8,22 +8,28 @@ const dec = require("../utils/dec.js");
 const GENESIS_PARENT_UUID = "00000000-0000-0000-0000-000000000000";
 
 const getOldestTransaction = async (walletUuid, tokenUuid) => {
-  // TODO modify this function to find earliest that is not 
-  // const transaction = await Transaction.findAll({
-  //   where: {
-  //     toAddress: walletUuid,
-  //     tokentype_uuid: tokenUuid
-  //   },
-  //   limit: 1,
-  //   order: [["updatedAt", "ASC"]]
-  // });
-  // return transaction[0];
+  const transactions = await Transaction.findAll({
+    where: {
+      toAddress: walletUuid,
+      tokentype_uuid: tokenUuid
+    },
+    order: [["updatedAt", "DESC"]] // newest to oldest
+  });
+  const parentTransactionUuids = new Set();
+  transactions.forEach((transaction)=>{
+    parentTransactionUuids.add(transaction.parentTransaction);
+  });
+  for (let i = transactions.length - 1; i >= 0; i--) {
+    const transaction = transactions[i];
+    if (!parentTransactionUuids.has(transaction.uuid)) {
+      return transaction;
+    }
+  }
 };
 
-const getProvenanceChain = async (transactionUuid) => {
-  const transactionChain = [];
+const getProvenanceChain = async (transaction) => {
   // Transaction chain order: (genesis -> ... -> redeemer)
-  let transaction = await Transaction.findById(transactionUuid);
+  const transactionChain = [];
   do {
     transactionChain.unshift(transaction);
     transaction = await Transaction.findById(transaction.parentTransaction);
@@ -126,15 +132,16 @@ module.exports = {
       return res.status(404).send({ message: "wallet_uuid is invalid" });
     }
     const oldestTxn = await getOldestTransaction(walletUuid, tokenUuid);
+    const transactionChain = await getProvenanceChain(oldestTxn);
+    return res.status(200).send(transactionChain);
   },
 
   async provenanceChain({ params }, res) {
-    // TODO check for invalid transactionUuid and throw error
     let transaction = await Transaction.findById(params.transaction_uuid);
     if (!transaction) {
       return res.status(404).send({ message: "transactionUuid is invalid"});
     }
-    const transactionChain = await getProvenanceChain(params.transaction_uuid);
+    const transactionChain = await getProvenanceChain(transaction);
     return res.status(200).send(transactionChain);
   }
 };

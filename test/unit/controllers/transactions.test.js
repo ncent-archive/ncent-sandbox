@@ -119,6 +119,35 @@ describe('transactions Controller', () => {
   });
 
   describe('oldestProvenanceChain', () => {
+    it('returns an accurate provenance chain', async (done) => {
+      const tHandler = async (transactionObject) => {
+        const newTransaction = transactionObject.transaction.txn;
+        const newReceiverKeypair = transactionObject.receiverKeypair;
+        const tests = (provenanceChain) => {
+          console.log(provenanceChain);
+          expect(provenanceChain.length).toBe(2);
+          const firstTransaction = provenanceChain[0];
+          const secondTransaction = provenanceChain[1];
+          expect(secondTransaction.uuid).toBe(newTransaction.uuid);
+          expect(firstTransaction.amount).toBe(AMOUNT);
+          expect(secondTransaction.amount).toBe(AMOUNT);
+          expect(firstTransaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
+          expect(firstTransaction.toAddress).toBe(receiverKeypair.publicKey());
+          expect(secondTransaction.fromAddress).toBe(receiverKeypair.publicKey());
+          expect(secondTransaction.toAddress).toBe(newReceiverKeypair.publicKey());
+          expect(firstTransaction.tokentype_uuid).toBe(tokenType.uuid);
+          expect(secondTransaction.tokentype_uuid).toBe(tokenType.uuid);
+          done();
+        };
+        await transactions.oldestProvenanceChain({
+          params: {
+            wallet_uuid: newReceiverKeypair.publicKey(),
+            tokentype_uuid: tokenType.uuid
+          }
+        }, new psuedoRes(tests));
+      };
+      createChildTransaction(receiverKeypair, transaction.txn.dataValues.uuid, tokenType.uuid, AMOUNT, tHandler);
+    });
     it('throws an error when given an invalid token_uuid', async (done) => {
       const tests = (res) => {
         expect(res.message).not.toBe(undefined);
