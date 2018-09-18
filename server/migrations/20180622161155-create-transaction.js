@@ -16,15 +16,13 @@ module.exports = {
 			},
 			parentTransaction: {
 				type: DataTypes.UUID,
-				allowNull: false
+				allowNull: true
 			},
    			fromAddress:{
-				//type: DataTypes.UUID,
 				type: DataTypes.STRING,  
       			allowNull: false,
     		},
     		toAddress:{
-				//type: DataTypes.UUID,
 				type: DataTypes.STRING,
         		allowNull:false,
     		},

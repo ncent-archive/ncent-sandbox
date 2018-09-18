@@ -10,19 +10,17 @@ module.exports = (sequelize, DataTypes) => {
     },
     parentTransaction:{
       type: DataTypes.UUID,
-      allowNull: false
+      allowNull: true
     },
     amount: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
     fromAddress:{
-      //type: DataTypes.UUID,
       type: DataTypes.STRING,
       allowNull: false
     },
     toAddress:{
-      //type: DataTypes.UUID,
       type: DataTypes.STRING,
       allowNull:false
     },

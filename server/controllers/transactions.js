@@ -1,147 +1,205 @@
-const Transaction = require("../models").Transaction;
-const Wallet = require("../models").Wallet;
-const TokenType = require("../models").TokenType;
+const { Transaction, Wallet, TokenType } = require('../models');
 const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
-const dec = require("../utils/dec.js");
+const dec = require("../utils/dec");
 
-const GENESIS_PARENT_UUID = "00000000-0000-0000-0000-000000000000";
-
-const getOldestTransaction = async (walletUuid, tokenUuid) => {
+// Receives: wallet
+// Returns: oldest transaction of a wallet that has no child transactions
+const getOldestTransaction = async (wallet) => {
+  const walletUuid = wallet.wallet_uuid;
+  const tokenUuid = wallet.tokentype_uuid;
   const transactions = await Transaction.findAll({
-    where: {
-      toAddress: walletUuid,
-      tokentype_uuid: tokenUuid
-    },
-    order: [["updatedAt", "DESC"]] // newest to oldest
+      where: { toAddress: walletUuid, tokentype_uuid: tokenUuid },
+      order: [["updatedAt", "DESC"]] // newest to oldest
   });
   const parentTransactionUuids = new Set();
-  transactions.forEach((transaction)=>{
-    parentTransactionUuids.add(transaction.parentTransaction);
+  transactions.forEach((transaction) => {
+      parentTransactionUuids.add(transaction.parentTransaction);
   });
   for (let i = transactions.length - 1; i >= 0; i--) {
-    const transaction = transactions[i];
-    if (!parentTransactionUuids.has(transaction.uuid)) {
-      return transaction;
-    }
+      const transaction = transactions[i];
+      if (!parentTransactionUuids.has(transaction.uuid)) {
+          return transaction;
+      }
   }
 };
-
+// Receives: Any transaction
+// Returns: chain of transactions from initial challenge to given transaction
+  // Order: (challenge -> ... -> transaction)
 const getProvenanceChain = async (transaction) => {
-  // Transaction chain order: (genesis -> ... -> redeemer)
-  const transactionChain = [];
+  const transactionChain = []; 
   do {
-    transactionChain.unshift(transaction);
-    transaction = await Transaction.findById(transaction.parentTransaction);
+      transactionChain.unshift(transaction);
+      transaction = await Transaction.findById(transaction.parentTransaction);
   } while (transaction);
   return transactionChain;
 }
+// Receives: publicKey, tokenTypeUuid
+// Returns: Boolean of whether this public key is the creator of a TokenType
+const isTokenTypeCreator = async (walletUuid, tokenTypeUuid) => {
+  const tokenType = await TokenType.findById(tokenTypeUuid);
+  return (tokenType.sponsor_uuid === walletUuid);
+};
+// Receives: publicKey, tokenTypeUuid
+// Returns: Finds a wallet (if one exists), with the given owner and tokenType
+const getWallet = async (publicKey, tokenTypeUuid) => {
+  const wallet = await Wallet.findOne({
+    where: {
+      tokentype_uuid: tokenTypeUuid,
+      wallet_uuid: publicKey
+    }
+  });
+  return wallet;
+}
 
-module.exports = {
-  async create({ body, params }, res) {
-    const tokenTypeUuid = params.tokentype_uuid;
-    const { fromAddress, toAddress, signed } = body;
-    const verifyingPublicKey = StellarSdk.StrKey.decodeEd25519PublicKey(fromAddress);
-    let senderWallet = await Wallet.findOne({ where: {
-      wallet_uuid: fromAddress,
-      tokentype_uuid: tokenTypeUuid
-    }});
-    let receiverWallet = await Wallet.findOne({ where: {
-      wallet_uuid: toAddress,
-      tokentype_uuid: tokenTypeUuid
-    }});
+const getChildrenTransactions = async (parentTransaction) => {
+  const childrenTransactions = await Transaction.findAll({
+    parentTransaction
+  });
+  return childrenTransactions;
+}
+
+// Receives: publicKey as string, signed transaction, unsigned transaction
+// Returns: Boolean: Was this signed by publicKey's secret key
+const isVerifiedTransaction = (publicKeyStr, signed, reconstructedObject) => {
+  const walletBuffer = StellarSdk.StrKey.decodeEd25519PublicKey(publicKeyStr);
+  const decodedObject = dec(JSON.stringify(reconstructedObject));
+  const verified = nacl.sign.detached.verify(
+    decodedObject,
+    Uint8Array.from(JSON.parse(signed)),
+    walletBuffer
+  );
+  return verified;
+}
+
+const transactionsController = {
+  // GET ()
+    // -> [{transactionData}...{transactionData}]
+  async list(req, res) {
+    try {
+        const allTransactions = await Transaction.findAll({});
+        res.status(200).send(allTransactions);
+    } catch(error) { res.status(400).send(error); }
+  },
+  // POST (params: {walletUuid, tokenTypeUuid}, body: {amount, signed})
+    // -> createdTransaction // this is just the "challenge" issued to creator
+  async create({body, params}, res) {
+    const { walletUuid, tokenTypeUuid } = params;
+    const signed = body.signed;
+    const amount = parseInt(body.amount, 10);
+    const wallet = await getWallet(walletUuid, tokenTypeUuid);
+    if (!wallet) {
+      return res.status(404).send({ message: "Wallet not found" });
+    }
     const tokenType = await TokenType.findById(tokenTypeUuid);
-    let msg;
-    let amount;
-    let parentTransactionUuid;
-    if (tokenType.sponsor_uuid === fromAddress) {
-      amount = parseInt(body.amount, 10);
-      parentTransactionUuid = GENESIS_PARENT_UUID;
-      msg = dec(JSON.stringify({
-        fromAddress,
-        toAddress,
-        amount
-      }));
-    } else {
-      parentTransactionUuid = body.parentTransactionUuid;
-      const parentTransaction = await Transaction.findById(parentTransactionUuid);
-      amount = parentTransaction.amount;
-      msg = dec(JSON.stringify({
-        fromAddress,
-        toAddress,
-        parentTransactionUuid
-      }));
+    if (!tokenType) {
+      return res.status(404).send({ message: "TokenType not found" });
     }
-    const verified = nacl.sign.detached.verify(
-      msg,
-      Uint8Array.from(JSON.parse(signed)),
-      verifyingPublicKey
-    );
-    if (!verified) {
-      return res.status(403).send({ message: "Failed Signing Transaction" });
+    if (!tokenType.sponsor_uuid === walletUuid) {
+      return res.status(404).send({message:"Wallet !== TokenType sponsor"});
     }
-    if (!senderWallet) {
-      return res.status(404).send({ message: "Balance for Wallet Not Found" });
+    const reconstructedObject = { amount };
+    if (!isVerifiedTransaction(walletUuid, signed, reconstructedObject)) {
+      return res.status(403).send({ message: "Invalid transaction signing" });
     }
-    const newAmount = senderWallet.balance - amount;
-    if (newAmount < 0) {
-      return res.status(403).send({ message: "Inadequate Balance" });
+    const newWalletBalance = wallet.balance - amount;
+    if (newWalletBalance < 0) {
+      return res.status(403).send({ message: "Inadequate wallet balance" });
     }
-    senderWallet = await senderWallet.update({ balance: newAmount });
-    if (!receiverWallet) {
-      receiverWallet = await Wallet.create({
+    const transaction = await Transaction.create({
+      amount: amount,
+      fromAddress: walletUuid,
+      toAddress: walletUuid,
+      tokentype_uuid: tokenTypeUuid
+    });
+    res.status(200).send(transaction);
+  },
+  //POST (params: {transactionUuid}, body: {fromAddress, toAddress, signed})
+    // -> transaction between fromAddress and toAddress, tranferring "challenge"
+  async share({ body, params }, res) {
+    const { transactionUuid } = params;
+    const { fromAddress, toAddress, signed } = body;
+    const transaction = await Transaction.findById(transactionUuid);
+    if (!transaction) {
+      return res.status(404).send({ message: "Transaction not found" });
+    }
+    if (!fromAddress === transaction.toAddress) {
+      return res.status(403).send({ message: "Unauthorized to transfer transaction" });
+    }
+    const childrenTransactions = await getChildrenTransactions(transactionUuid);
+    if (childrenTransactions.length > 0) {
+      return res.status(403).send({ message: "This transaction has been transferred already" });
+    }
+    const tokenTypeUuid = transaction.tokentype_uuid;
+    let fromWallet = await getWallet(fromAddress, tokenTypeUuid);
+    if (!fromWallet) {
+      return res.status(404).send({ message: "Invalid fromAddress" });
+    }
+    let toWallet = await getWallet(toAddress, tokenTypeUuid);
+    if (!toWallet) {
+      toWallet = await Wallet.create({
         wallet_uuid: toAddress,
         tokentype_uuid: tokenTypeUuid
       });
     }
-    receiverWallet = await receiverWallet.update({ balance: receiverWallet.balance + amount });
-    const transaction = await Transaction.create({
-      amount: amount,
-      fromAddress: fromAddress,
-      toAddress: toAddress,
-      tokentype_uuid: tokenTypeUuid,
-      parentTransaction: parentTransactionUuid
-    });;
-    const data = {
-      sender: senderWallet,
-      receiver: receiverWallet,
-      txn: transaction
+    const reconstructedObject = { fromAddress, toAddress};
+    if (!isVerifiedTransaction(fromAddress, signed, reconstructedObject)) {
+      return res.status(403).send({ message: "Invalid transaction signing" });
     }
+    fromWallet = await fromWallet.update({
+      balance: fromWallet.balance - transaction.amount
+    });
+    toWallet = await toWallet.update({
+      balance: toWallet.balance + transaction.amount
+    });
+    const newTransaction = await Transaction.create({
+      toAddress,
+      fromAddress,
+      amount: transaction.amount,
+      parentTransaction: transactionUuid,
+      tokentype_uuid: tokenTypeUuid
+    });
+    const data = {
+      fromWallet,
+      toWallet,
+      txn: newTransaction
+    };
     res.status(200).send(data);
   },
-
-  list(req, res) {
-    return Transaction.findAll({})
-      .then(transactions => res.status(200).send(transactions))
-      .catch(error => res.status(400).send(error));
-  },
-
-  async oldestProvenanceChain({ params }, res) {
-    const walletUuid = params.wallet_uuid;
-    const tokenUuid = params.tokentype_uuid;
-    const tokenTypeExists = await TokenType.findById(tokenUuid);
-    const walletExists = await Wallet.findOne({
-      where: {
-        wallet_uuid: walletUuid
-      }
-    });
-    if (!tokenTypeExists) {
-      return res.status(404).send({ message: "tokentype_uuid is invalid" });
-    }
-    if (!walletExists) {
-      return res.status(404).send({ message: "wallet_uuid is invalid" });
-    }
-    const oldestTxn = await getOldestTransaction(walletUuid, tokenUuid);
-    const transactionChain = await getProvenanceChain(oldestTxn);
-    return res.status(200).send(transactionChain);
-  },
-
-  async provenanceChain({ params }, res) {
+  // GET (params: {transactionUuid})
+    // -> [challengeTransaction, transaction2...transaction]
+    // array of transactions leading to transaction w/ transactionUuid
+  async provenanceChain({params}, res) {
     let transaction = await Transaction.findById(params.transaction_uuid);
     if (!transaction) {
-      return res.status(404).send({ message: "transactionUuid is invalid"});
+      return res.status(404).send({ message: "transactionUuid is invalid" });
+    }
+    if (transaction.toAddress === transaction.fromAddress) {
+      return res.status(400).send({ message: "Challenge has no provenance" });
     }
     const transactionChain = await getProvenanceChain(transaction);
-    return res.status(200).send(transactionChain);
-  }
+    res.status(200).send(transactionChain);
+  },
+  // GET (params: {walletUuid, tokenTypeUuid})
+    // -> [challengeTransaction, transaction2...transaction]
+    // returns provenanceChain of oldest "challenge" that hasn't been shared
+  async provenanceChainFIFO({params}, res) {
+    const { walletUuid, tokenTypeUuid } = params;
+    const wallet = await getWallet(walletUuid, tokenTypeUuid);
+    if (!wallet) {
+      return res.status(404).send({ message: "Wallet not found" });
+    }
+    const tokenType = await TokenType.findById(tokenTypeUuid);
+    if (!wallet) {
+      return res.status(404).send({ message: "TokenType not found" });
+    }
+    const oldestOwnedTransaction = await getOldestTransaction(wallet);
+    if (!oldestOwnedTransaction) {
+      return res.status(404).send({ message: "No owned challenges" });
+    }
+    const transactionChain = await getProvenanceChain(oldestOwnedTransaction);
+    res.status(200).send(transactionChain);
+  },
 };
+
+module.exports = transactionsController;
