@@ -50,6 +50,7 @@ describe('TokenType model', async () => {
       tokentype_uuid: tokenType.uuid,
       amount: 1000,
       fromAddress: keypair1.publicKey(),
+      parentTransaction: "00000000-0000-0000-0000-000000000000",      
       toAddress: keypair2.publicKey(),
     };
     const transaction = await Transaction.create(transactionTemplate);

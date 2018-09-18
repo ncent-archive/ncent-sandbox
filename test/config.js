@@ -22,6 +22,8 @@ global.signObject = (messageObject, secretKey) => {
   return JSON.stringify(Array.from(signed));
 };
 
-global.createTestTransaction = require('./utils').createTestTransaction;
+global.createOriginTransaction = require("./utils").createOriginTransaction;
+global.createChildTransaction = require('./utils').createChildTransaction;
+global.createChildTransactionWithKeypair = require('./utils').createChildTransactionWithKeypair;
 
 global.psuedoRes = psuedoRes;

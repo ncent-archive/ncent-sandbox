@@ -12,9 +12,7 @@ module.exports = {
       Name: req.body.Name,
       ExpiryDate: req.body.ExpiryDate,
       sponsor_uuid: req.body.sponsor_uuid,
-      totalTokens: req.body.totalTokens,
-      // ProvenanceLength: req.body.ProvenanceLength,
-      // Lambda: req.body.Lambda,
+      totalTokens: req.body.totalTokens
     })
     .then(function(tokentype) {
       data = {token: tokentype};

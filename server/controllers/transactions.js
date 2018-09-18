@@ -18,97 +18,76 @@ const getOldestTransaction = async (walletUuid, tokenUuid) => {
 };
 
 module.exports = {
-  create({ body, params }, res) {
-    let data;
-    const { amount, fromAddress, toAddress, signed } = body;
-    // get Uint8array version of publicKey for verification
-    const verifyingWallet = StellarSdk.Keypair.fromPublicKey(fromAddress);
-    // remake the messageObj from params
-    const msg = dec(
-      JSON.stringify({
+  async create({ body, params }, res) {
+    const tokenTypeUuid = params.tokentype_uuid;
+    const { fromAddress, toAddress, signed } = body;
+    const verifyingPublicKey = StellarSdk.StrKey.decodeEd25519PublicKey(fromAddress);
+    let senderWallet = await Wallet.findOne({ where: {
+      wallet_uuid: fromAddress,
+      tokentype_uuid: tokenTypeUuid
+    }});
+    let receiverWallet = await Wallet.findOne({ where: {
+      wallet_uuid: toAddress,
+      tokentype_uuid: tokenTypeUuid
+    }});
+    const tokenType = await TokenType.findById(tokenTypeUuid);
+    let msg;
+    let amount;
+    let parentTransactionUuid;
+    if (tokenType.sponsor_uuid === fromAddress) {
+      amount = parseInt(body.amount, 10);
+      parentTransactionUuid = "00000000-0000-0000-0000-000000000000";
+      msg = dec(JSON.stringify({
         fromAddress,
         toAddress,
         amount
-      })
-    );
+      }));
+    } else {
+      parentTransactionUuid = body.parentTransactionUuid;
+      const parentTransaction = await Transaction.findById(parentTransactionUuid);
+      amount = parentTransaction.amount;
+      msg = dec(JSON.stringify({
+        fromAddress,
+        toAddress,
+        parentTransactionUuid
+      }));
+    }
     const verified = nacl.sign.detached.verify(
       msg,
       Uint8Array.from(JSON.parse(signed)),
-      verifyingWallet._publicKey
+      verifyingPublicKey
     );
     if (!verified) {
-      res.status(403).send({
-        message: "Failed Signing Transaction"
-      });
-      return;
+      return res.status(403).send({ message: "Failed Signing Transaction" });
     }
-    Wallet.findAll({
-      where: {
-        wallet_uuid: fromAddress,
-        tokentype_uuid: params.tokentype_uuid
-      }
-    })
-      .then(function(senderWallets) {
-        if (!senderWallets || senderWallets.length < 1) {
-          throw new Error("Balance for Wallet Not Found");
-        }
-        if (parseInt(senderWallets[0].balance, 10) - parseInt(amount, 10) < 0) {
-          throw new Error("Inadequate Balance");
-        }
-        return senderWallets[0].update({
-          balance: parseInt(senderWallets[0].balance, 10) - parseInt(amount, 10)
-        });
-      })
-      .then(function(updatedSdrWallets) {
-        data = { sender: updatedSdrWallets };
-        return Wallet.findAll({
-          where: {
-            wallet_uuid: toAddress,
-            tokentype_uuid: params.tokentype_uuid
-          }
-        });
-      })
-      .then(function(receiverWallets) {
-        if (!receiverWallets || receiverWallets.length < 1) {
-          return Wallet.create({
-            wallet_uuid: toAddress,
-            tokentype_uuid: params.tokentype_uuid
-          });
-        } else {
-          return receiverWallets[0];
-        }
-      })
-      .then(function(rspnse) {
-        return rspnse.update({
-          balance: parseInt(rspnse.balance, 10) + parseInt(amount, 10)
-        });
-      })
-      .then(function(updatedRecWallets) {
-        data["receiver"] = updatedRecWallets;
-        return Transaction.create({
-          amount: amount,
-          fromAddress: fromAddress,
-          toAddress: toAddress,
-          tokentype_uuid: params.tokentype_uuid
-        });
-      })
-      .then(function(transaction) {
-        data["txn"] = transaction;
-        return res.status(200).send(data);
-      })
-      .catch(function(error) {
-        if (error.message === "Balance for Wallet Not Found") {
-          res.status(404).send({
-            message: "Balance for Wallet Not Found"
-          });
-        } else if (error.message === "Inadequate Balance") {
-          res.status(403).send({
-            message: "Inadequate Balance"
-          });
-        } else {
-          res.status(400).send(error);
-        }
+    if (!senderWallet) {
+      return res.status(404).send({ message: "Balance for Wallet Not Found" });
+    }
+    const newAmount = senderWallet.balance - amount;
+    if (newAmount < 0) {
+      return res.status(403).send({ message: "Inadequate Balance" });
+    }
+    senderWallet = await senderWallet.update({ balance: newAmount });
+    if (!receiverWallet) {
+      receiverWallet = await Wallet.create({
+        wallet_uuid: toAddress,
+        tokentype_uuid: tokenTypeUuid
       });
+    }
+    receiverWallet = await receiverWallet.update({ balance: receiverWallet.balance + amount });
+    const transaction = await Transaction.create({
+      amount: amount,
+      fromAddress: fromAddress,
+      toAddress: toAddress,
+      tokentype_uuid: tokenTypeUuid,
+      parentTransaction: parentTransactionUuid
+    });;
+    const data = {
+      sender: senderWallet,
+      receiver: receiverWallet,
+      txn: transaction
+    }
+    res.status(200).send(data);
   },
 
   list(req, res) {

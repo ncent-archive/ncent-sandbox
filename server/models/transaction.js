@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       defaultValue: DataTypes.UUIDV4,
     },
+    parentTransaction:{
+      type: DataTypes.UUID,
+      allowNull: false
+    },
     amount: {
       type: DataTypes.INTEGER,
       allowNull: false

@@ -13,7 +13,11 @@ module.exports = {
    			amount: {
       			type: DataTypes.INTEGER,
       			allowNull: false,
-    		},
+			},
+			parentTransaction: {
+				type: DataTypes.UUID,
+				allowNull: false
+			},
    			fromAddress:{
 				//type: DataTypes.UUID,
 				type: DataTypes.STRING,  

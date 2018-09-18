@@ -30,7 +30,7 @@ describe('transactions Controller', () => {
       receiverKeypair = transactionObject.receiverKeypair;
       done();
     };
-    createTestTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
+    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
   });
 
   afterEach(async (done) => {
@@ -115,7 +115,7 @@ describe('transactions Controller', () => {
           }
         }, new psuedoRes(tests));
       };
-      createTestTransaction(receiverKeypair, tokenType.uuid, AMOUNT, tHandler);
+      createChildTransaction(receiverKeypair, transaction.txn.dataValues.uuid, tokenType.uuid, AMOUNT, tHandler);
     });
     it('throws an error when given an invalid token_uuid', async (done) => {
       const tests = (res) => {
