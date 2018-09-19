@@ -9,15 +9,15 @@ describe('tokentypes Controller', () => {
   let wallet;
   const keypair = StellarSdk.Keypair.random();
   const tokenTypeTemplate = {
-    Name: 'tokenName',
-    ExpiryDate: '2020',
-    sponsor_uuid: keypair.publicKey(),
+    name: 'tokenName',
+    expiryDate: '2020',
+    sponsorUuid: keypair.publicKey(),
     totalTokens: 10000,
   };
 
   beforeEach(async (done) => {
     const tokenReceiver = async (res) => {
-      tokenType = res['token'];
+      tokenType = res['tokenType'];
       wallet = res['wallet'];
       done();
     }
@@ -35,23 +35,21 @@ describe('tokentypes Controller', () => {
   describe('create', () => {
     it('returns a tokentype with correct properties', () => {
       expect(typeof tokenType).toBe('object');
-      expect(tokenType.Name).toBe(tokenTypeTemplate.Name);
-      expect(tokenType.ExpiryDate.getTime()).toBe(
-        new Date(tokenTypeTemplate.ExpiryDate).getTime()
+      expect(tokenType.name).toBe(tokenTypeTemplate.name);
+      expect(tokenType.expiryDate.getTime()).toBe(
+        new Date(tokenTypeTemplate.expiryDate).getTime()
       );
       expect(typeof tokenType.uuid).toBe('string');
-      expect(tokenType.sponsor_uuid).toBe(tokenTypeTemplate.sponsor_uuid);
+      expect(tokenType.sponsorUuid).toBe(tokenTypeTemplate.sponsorUuid);
       expect(tokenType.totalTokens).toBe(tokenTypeTemplate.totalTokens);
     });
 
-    it('returns a wallet with all tokens of tokentype', () => {
+    it('returns a wallet storing given sponsorUuid', () => {
       expect(typeof wallet).toBe('object');
-      expect(wallet.balance).toBe(tokenTypeTemplate.totalTokens);
-      expect(wallet.wallet_uuid).toBe(keypair.publicKey());
-      expect(wallet.tokentype_uuid).toBe(tokenType.uuid);
+      expect(wallet.address).toBe(tokenTypeTemplate.sponsorUuid);
     });
 
-    it('persists a created tokentype to the database', async (done) => {
+    it('persists a created TokenType to the database', async (done) => {
       const retrievedToken = await TokenType.findById(tokenType.uuid);
       expect(retrievedToken).not.toBe(undefined);
       done();
@@ -64,39 +62,35 @@ describe('tokentypes Controller', () => {
     });
   });
 
-  describe('list', () => {
-    it('returns all tokentypes', async (done) => {
-      const tests = (res) => {
-        const tokentype = res[0];
-        expect(tokentype.uuid).toBe(tokentype.uuid);
+  describe('listAll', () => {
+    it('returns all TokenTypes', async (done) => {
+      const tests = (receivedTokenTypes) => {
+        const receivedTokenType = receivedTokenTypes[0];
+        expect(receivedTokenType.uuid).toBe(tokenType.uuid);
         done();
       };
-      await tokentypes.list({}, new psuedoRes(tests));
+      await tokentypes.listAll({}, new psuedoRes(tests));
     });
   });
 
-  describe('retrieve', () => {
-    it('returns tokentype of a param type', async (done) => {
-      const tests = (res) => {
-        const tokentype = res;
-        expect(tokentype.uuid).toBe(tokentype.uuid);
+  describe('listOne', () => {
+    it('returns TokenType of a param type', async (done) => {
+      const tests = (receivedTokenType) => {
+        expect(receivedTokenType.uuid).toBe(tokenType.uuid);
         done();
       };
-      await tokentypes.retrieve({
-        params: {
-          tokentype_uuid: tokenType.uuid
-        }
+      await tokentypes.listOne({
+        params: { tokenTypeUuid: tokenType.uuid }
       }, new psuedoRes(tests));
     });
+
     it ('returns TokenType not found if given an invalid uuid', async (done) => {
       const tests = (res) => {
-        expect(res.message).toBe("TokenType Not Found");
+        expect(res.message).toBe("TokenType not found");
         done();
       };
-      await tokentypes.retrieve({
-        params: {
-          tokentype_uuid: '44444444-4444-4444-4444-444444444444'
-        }
+      await tokentypes.listOne({
+        params: { tokenTypeUuid: '44444444-4444-4444-4444-444444444444'}
       }, new psuedoRes(tests));
     })
   });

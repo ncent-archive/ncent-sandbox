@@ -8,7 +8,7 @@ const createOriginTransaction = async (senderKeypair, tokenId, amount, callback)
   messageObj.signed = signed;
   await transactions.create({
     body: messageObj,
-    params: { walletUuid: senderKeypair.publicKey(), tokenTypeUuid: tokenId }
+    params: { address: senderKeypair.publicKey(), tokenTypeUuid: tokenId }
   }, new psuedoRes(async (resolvedTransaction) => {
     callback(resolvedTransaction);
   }));

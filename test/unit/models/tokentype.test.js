@@ -10,9 +10,9 @@ describe('TokenType model', async () => {
   beforeEach(async (done) => {
     const keypair = StellarSdk.Keypair.random();
     tokenTypeTemplate = {
-      Name: 'tokenName',
-      ExpiryDate: '2020',
-      sponsor_uuid: keypair.publicKey(),
+      name: 'tokenName',
+      expiryDate: '2020',
+      sponsorUuid: keypair.publicKey(),
       totalTokens: 10000,
     };
     tokenType = await TokenType.create(tokenTypeTemplate);
@@ -27,12 +27,12 @@ describe('TokenType model', async () => {
 
   it('returns an instance with correct properties', async (done) => {
     expect(typeof tokenType).toBe('object');
-    expect(tokenType.Name).toBe(tokenTypeTemplate.Name);
-    expect(tokenType.ExpiryDate.getTime()).toBe(
-      new Date(tokenTypeTemplate.ExpiryDate).getTime()
+    expect(tokenType.name).toBe(tokenTypeTemplate.name);
+    expect(tokenType.expiryDate.getTime()).toBe(
+      new Date(tokenTypeTemplate.expiryDate).getTime()
     );
     expect(typeof tokenType.uuid).toBe('string');
-    expect(tokenType.sponsor_uuid).toBe(tokenTypeTemplate.sponsor_uuid);
+    expect(tokenType.sponsorUuid).toBe(tokenTypeTemplate.sponsorUuid);
     expect(tokenType.totalTokens).toBe(tokenTypeTemplate.totalTokens);
     done();
   });
@@ -40,28 +40,6 @@ describe('TokenType model', async () => {
   it ('persists the created TokenType', async (done) => {
     const retrievedToken = await TokenType.findById(tokenType.uuid);
     expect(retrievedToken).not.toBe(undefined);
-    done();
-  });
-
-  it ('creates an association with the Transaction model', async (done) => {
-    const keypair1 = StellarSdk.Keypair.random();
-    const keypair2 = StellarSdk.Keypair.random();
-    const transactionTemplate = {
-      tokentype_uuid: tokenType.uuid,
-      amount: 1000,
-      fromAddress: keypair1.publicKey(),
-      parentTransaction: "00000000-0000-0000-0000-000000000000",      
-      toAddress: keypair2.publicKey(),
-    };
-    const transaction = await Transaction.create(transactionTemplate);
-    const tokenWithTransactions = await TokenType.findById(tokenType.uuid, {
-      include: [{
-        model: Transaction,
-        as: 'transactions',
-      }],
-    });
-    const retrievedTransaction = tokenWithTransactions['transactions'][0];
-    expect (retrievedTransaction.tokentype_uuid).toBe(tokenType.uuid);
     done();
   });
 });

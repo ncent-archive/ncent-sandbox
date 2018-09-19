@@ -1,7 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const TokenType = sequelize.define('TokenType', {
-    Name: {
+    name: {
 	    type: DataTypes.STRING,
       allowNull: false,
       unique: true
@@ -13,12 +13,11 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       defaultValue: DataTypes.UUIDV4,
     },
-    ExpiryDate: {
+    expiryDate: {
       type: DataTypes.DATE,
       allowNull: false
     },
-    sponsor_uuid: {
-      //type: DataTypes.UUID,
+    sponsorUuid: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -27,26 +26,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: {min: 0}
     },
-    // ValueEscrowRate: {
-    //   type: DataTypes.FLOAT,
-    //   allowNull: false,
-    //   defaultValue: 1
-    // },
-    // CashoutRate: {
-	  //   type: DataTypes.FLOAT,
-	  //   allowNull: false,
-	  //   defaultValue: 1
-    // },
-    // ProvenanceLength: {
-	  //   type: DataTypes.INTEGER,
-	  //   defaultValue: 1
-    // },
-    // Lambda: DataTypes.FLOAT,
   });
-
   TokenType.associate = (models) => {
     TokenType.hasMany(models.Transaction, {
-	    foreignKey: 'tokentype_uuid',
+	    foreignKey: 'tokenTypeUuid',
 	    as: 'transactions',
     });
   };

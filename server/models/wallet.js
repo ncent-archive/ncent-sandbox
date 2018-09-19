@@ -8,38 +8,10 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       defaultValue: DataTypes.UUIDV4
     },
-    wallet_uuid: {
+    address: {
 	    type:DataTypes.STRING,
       allowNull: false
     },
-    tokentype_uuid: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      // validate: {
-      //   exists: function(value) {
-      //     console.log(value);
-      //     return sequelize.models.TokenType.findById(value)
-      //     .then(tokentype => {
-      //       if (!tokentype) {
-      //         throw new Error({error: [{message: 'TokenType Not Found'}]});
-      //       } else {
-      //         return;
-      //       }
-      //     })
-      //     .catch(error => console.log(error.message))
-      //   }
-      // }
-    },
-    balance: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-      validate: {min: 0}
-    }
-  },{
-    indexes: [
-      { fields: ['wallet_uuid', 'tokentype_uuid'], unique: true }
-    ]
   });
   return Wallet;
 };

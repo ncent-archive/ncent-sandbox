@@ -14,16 +14,12 @@ describe('transactions Controller', () => {
   beforeEach(async (done) => {
     walletOwnerKeypair = StellarSdk.Keypair.random();
     tokenType = await TokenType.create({
-      Name: 'tokenName',
-      ExpiryDate: '2020',
-      sponsor_uuid: walletOwnerKeypair.publicKey(),
+      name: 'tokenName',
+      expiryDate: '2020',
+      sponsorUuid: walletOwnerKeypair.publicKey(),
       totalTokens: 10000,
     });
-    wallet = await Wallet.create({
-      wallet_uuid: walletOwnerKeypair.publicKey(),
-      tokentype_uuid: tokenType.uuid,
-      balance: INITIAL_WALLET_AMOUNT,
-    });
+    wallet = await Wallet.create({ address: walletOwnerKeypair.publicKey()});
     const tHandler = (transactionObject) => {
       transaction = transactionObject;
       done();
@@ -51,13 +47,11 @@ describe('transactions Controller', () => {
 
   describe('create', () => {
     it('returns a "challenge" transaction', () => {
-      const transactionObject = transaction;
-      
       expect(transaction).not.toBe(undefined);
-      expect(typeof transactionObject.uuid).toBe('string');
-      expect(transactionObject.amount).toBe(AMOUNT);
-      expect(transactionObject.fromAddress).toBe(walletOwnerKeypair.publicKey());
-      expect(transactionObject.toAddress).toBe(walletOwnerKeypair.publicKey());
+      expect(typeof transaction.uuid).toBe('string');
+      expect(transaction.amount).toBe(AMOUNT);
+      expect(transaction.fromAddress).toBe(walletOwnerKeypair.publicKey());
+      expect(transaction.toAddress).toBe(walletOwnerKeypair.publicKey());
     });
 
     it('persists a created transaction to the database', async (done) => {
@@ -73,9 +67,7 @@ describe('transactions Controller', () => {
         done();
       };
       const nefariousWallet = await Wallet.create({
-        wallet_uuid: nefariousKeypair.publicKey(),
-        tokentype_uuid: tokenType.uuid,
-        balance: 0,
+        address: nefariousKeypair.publicKey()
       });
       createOriginTransaction(nefariousKeypair, tokenType.uuid, AMOUNT, tHandler);
     });
@@ -111,28 +103,10 @@ describe('transactions Controller', () => {
     it ('only allows for sharing of owned transactions', async (done) => {
       const handleShare = sharedTransaction => {
         const msg = sharedTransaction.transaction.message;
-        expect(msg).toBe('This transaction has been transferred already');
+        expect(msg).toBe("Transaction was transferred already");
         done();
       };
       shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare);
-    });
-
-    it('adds balance to the receiver wallet balance', async (done) => {
-      const retrievedReceiverWallet =
-        await Wallet.findOne({where: {
-          wallet_uuid: receiverKeypair.publicKey()
-        }});
-      expect(retrievedReceiverWallet.balance).toBe(AMOUNT);
-      done();
-    });
-  
-    it('subtracts balance from sender wallet balance', async (done) => {
-      const senderWallet =
-        await Wallet.findOne({where: {
-          wallet_uuid: walletOwnerKeypair.publicKey()
-        }});
-      expect(senderWallet.balance).toBe(INITIAL_WALLET_AMOUNT - AMOUNT);
-      done();
     });
   })
 
@@ -181,7 +155,7 @@ describe('transactions Controller', () => {
         receiverKeypair2 = sharedTransaction.receiverKeypair;
         await transactions.provenanceChainFIFO({
           params: {
-            walletUuid: receiverKeypair2.publicKey(),
+            address: receiverKeypair2.publicKey(),
             tokenTypeUuid: tokenType.uuid
           }
         }, new psuedoRes(handleProvenanceChain)
@@ -200,28 +174,28 @@ describe('transactions Controller', () => {
       shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare1);
     });
 
-    it('throws an error when given an invalid token_uuid', async (done) => {
+    it('throws an error when given an invalid tokenUuid', async (done) => {
       const tests = (res) => {
         expect(res.message).not.toBe(undefined);
         done();
       };
       await transactions.provenanceChainFIFO({
         params: {
-          walletUuid: walletOwnerKeypair.publicKey(),
-          tokentypeUuid: '44444444-4444-4444-4444-444444444444'
+          address: walletOwnerKeypair.publicKey(),
+          tokenTypeUuid: '44444444-4444-4444-4444-444444444444'
         }
       }, new psuedoRes(tests));
     });
 
-    it('throws an error when given an invalid wallet_uuid', async (done) => {
+    it('throws an error when given an invalid address', async (done) => {
       const tests = (res) => {
         expect(res.message).not.toBe(undefined);
         done();
       };
       await transactions.provenanceChainFIFO({
         params: {
-          walletUuid: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-          tokentypeUuid: tokenType.uuid
+          address: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          tokenTypeUuid: tokenType.uuid
         }
       }, new psuedoRes(tests));
     });
