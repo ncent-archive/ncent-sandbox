@@ -1,12 +1,12 @@
-const Wallet = require('../models').Wallet;
-
+const {Wallet, TokenType, Transaction, Sequelize} = require('../models');
+const Op = Sequelize.Op;
 const calculateWalletOwnerBalance = async (publicKey, tokenType) => {
   let balance = tokenType.totalTokens;
-  const fromTransactions = await Transaction.findAll({
+  const fromTransactions = await Transaction.findAll({ where: {
     fromAddress: publicKey,
     toAddress: {
       [Op.ne]: publicKey // to avoid the challenge transactions (from === to)
-  }});
+  }}});
   fromTransactions.forEach((transaction) => {
     balance -= transaction.amount;
   });
@@ -16,10 +16,10 @@ const calculateWalletOwnerBalance = async (publicKey, tokenType) => {
 const calculateWalletBalance = async (publicKey, tokenTypeUuid) => {
   let balance = 0;
   const toTransactions = await Transaction.findAll({
-    where: { toAddress: address, tokenTypeUuid }
+    where: { toAddress: publicKey, tokenTypeUuid }
   });
   const fromTransactions = await Transaction.findAll({
-    where: { fromAddress: address, tokenTypeUuid }
+    where: { fromAddress: publicKey, tokenTypeUuid }
   });
   toTransactions.forEach((transaction) => {
     balance += transaction.amount;
@@ -60,12 +60,13 @@ const walletsController = {
       if (!wallet) {
         return res.status(404).send({ message: 'Wallet not found' });
       }
-      const tokenType = await tokenType.findById(tokenTypeUuid);
+      const tokenType = await TokenType.findById(tokenTypeUuid);
       if (!tokenType) {
         return res.status(404).send({ message: 'TokenType not found' });
       }
       let balance;
       if (address === tokenType.sponsorUuid) {
+        console.log("CALCULATING WALLET OWNER BALANCE");
         balance = await calculateWalletOwnerBalance(address, tokenType);
       } else {
         balance = await calculateWalletBalance(address, tokenTypeUuid);

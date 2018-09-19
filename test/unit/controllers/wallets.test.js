@@ -1,7 +1,6 @@
 const StellarSdk = require('stellar-sdk');
 const wallets = require('../../../server/controllers').wallets;
 const db = require('../../../server/models')
-const TokenType = db.TokenType;
 const Wallet = db.Wallet;
 
 describe('wallets Controller', () => {
