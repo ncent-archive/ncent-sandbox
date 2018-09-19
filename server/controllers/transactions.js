@@ -2,6 +2,7 @@ const { Transaction, Wallet, TokenType } = require('../models');
 const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec");
+const TOKEN_GRAVEYARD_ADDRESS = process.env.TOKEN_GRAVEYARD_ADDRESS;
 
 // Receives: publicKey, tokenTypeUuid
 // Returns: oldest transaction of a wallet that has no child transactions
@@ -186,29 +187,29 @@ const transactionsController = {
   },
   // POST (body: { transactionUuid, signed })
   // -> transaction w/ tokenGraveyard
-  // async redeem({body}, res) {
-  //   const { transactionUuid, signed } = body;
-  //   const transaction = await Transaction.findById(transactionUuid);
-  //   const {toAddress, tokenTypeUuid, amount} = transaction;
-  //   if (!transaction) {
-  //     return res.status(404).send({ message: "Transaction not found" });
-  //   }
-  //   const reconstructedObject = { transactionUuid };
-  //   if (!isVerified(transaction.sponsorUuid, signed, reconstructedObject)) {
-  //     return res.status(403).send({
-  //       message: "Only the TokenType sponsor can trigger redemption"
-  //     });
-  //   }
-  //   let redeemWallet = await Wallet.findOne({ where: { address: toAddress } });
-  //   const newTransaction = await Transaction.create({
-  //     fromAddress: toAddress,
-  //     toAddress: 'TOKEN_GRAVEYARD_PUBLIC_KEY_HERE',
-  //     amount,
-  //     tokenTypeUuid
-  //   });
-  //   const data = { redeemWallet, txn: newTransaction };
-  //   res.status(200).send(data);
-  // }
+  async redeem({body}, res) {
+    const { transactionUuid, signed } = body;
+    const transaction = await Transaction.findById(transactionUuid);
+    const {toAddress, tokenTypeUuid, amount} = transaction;
+    if (!transaction) {
+      return res.status(404).send({ message: "Transaction not found" });
+    }
+    const reconstructedObject = { transactionUuid };
+    if (!isVerified(transaction.sponsorUuid, signed, reconstructedObject)) {
+      return res.status(403).send({
+        message: "Only the TokenType sponsor can trigger redemption"
+      });
+    }
+    let redeemWallet = await Wallet.findOne({ where: { address: toAddress } });
+    const newTransaction = await Transaction.create({
+      fromAddress: toAddress,
+      toAddress: TOKEN_GRAVEYARD_ADDRESS,
+      amount,
+      tokenTypeUuid
+    });
+    const data = { redeemWallet, transaction: newTransaction };
+    res.status(200).send(data);
+  }
 };
 
 module.exports = transactionsController;
