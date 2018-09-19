@@ -8,7 +8,7 @@ The nCent Sandbox allows you to run a server that mimics the nCent Core Protocol
 
 The Sandbox API routes are detailed [here](/server/routes/index/js).
 
-## Installation
+## Local Installation
 
 ### Using Docker to run the sandbox locally
 
@@ -294,30 +294,4 @@ tokenTypeUuid | String | Valid UUID of a TokenType
 #### Body:
 none
 - - - -
-## Structural Assumptions
-1. Fungible tokens for all stamped token types
-2. Database includes wallet (which has balances for each coin type) and token type (with transaction history under them)
-3. Same Expiration Date for all tokens of one stamped token type
 
-## Implementation
-1. NodeJS and PostgreSQL with Sequelize
-2. NCNT is an entry under TokenType but is dealt with carefully
-
-## Resources
-1. TokenType:
-	- Name
-	- UUID
-	- Expiry Date
-	- Sponsor_UUID
-	- Total Tokens Stamped
-
-2. Transaction:
-	- UUID
-	- Amount
-	- From Wallet Address
-	- To Wallet Address
-	- TokenType_UUID (Foreign Key)
-
-3.  Wallet:
-	- UUID
-	- Wallet_UUID
