@@ -1,64 +1,114 @@
-// const StellarSdk = require('stellar-sdk');
-// const transactions = require('../../../server/controllers').transactions;
-// const db = require('../../../server/models');
-// const { TokenType, Wallet, Transaction } = db;
+const StellarSdk = require('stellar-sdk');
+const transactions = require('../../../server/controllers').transactions;
+const db = require('../../../server/models');
+const { TokenType, Wallet, Transaction } = db;
 
-// describe('Provenance and Redemption', () => {
-//     const INITIAL_WALLET_AMOUNT = 10000;
-//     const AMOUNT = 1000;
-//     let tokenType;
-//     let walletOwnerKeypair;
+describe('Provenance and Redemption', () => {
+  const INITIAL_WALLET_AMOUNT = 10000;
+  const AMOUNT = 1000;
+  let tokenType;
+  let walletOwnerKeypair;
+  let endTransaction;
+  let receiverKeypair1;
+  let receiverKeypair2;
 
-//     beforeEach(async (done) => {
-//         walletOwnerKeypair = StellarSdk.Keypair.random();
-//         tokenType = await TokenType.create({
-//             Name: 'tokenName',
-//             ExpiryDate: '2020',
-//             sponsor_uuid: walletOwnerKeypair.publicKey(),
-//             totalTokens: 10000,
-//         });
-//         await Wallet.create({
-//             wallet_uuid: walletOwnerKeypair.publicKey(),
-//             tokentype_uuid: tokenType.uuid,
-//             balance: INITIAL_WALLET_AMOUNT,
-//         });
-//         done();
-//     });
+  beforeEach(async (done) => {
+    walletOwnerKeypair = StellarSdk.Keypair.random();
+    tokenType = await TokenType.create({
+        name: 'tokenName',
+        expiryDate: '2020',
+        sponsorUuid: walletOwnerKeypair.publicKey(),
+        totalTokens: INITIAL_WALLET_AMOUNT,
+    });
+    await Wallet.create({ address: walletOwnerKeypair.publicKey() });
+    const tHandler = originTransaction => {
+      shareTransaction(walletOwnerKeypair, originTransaction.uuid, handleShare1);
+    }
+    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
+    const handleShare1 = sharedTransaction => {
+      receiverKeypair1 = sharedTransaction.receiverKeypair;
+      const transaction2 = sharedTransaction.transaction.txn;
+      shareTransaction(receiverKeypair1, transaction2.uuid, handleShare2);
+    };
+    const handleShare2 = async sharedTransaction => {
+      receiverKeypair2 = sharedTransaction.receiverKeypair;
+      endTransaction = sharedTransaction.transaction.txn;
+      done();
+    }
+  });
 
-//     afterEach(async (done) => {
-//         await TokenType.destroy({ where: {} });
-//         await Wallet.destroy({ where: {} });
-//         await Transaction.destroy({ where: {} });
-//         done();
-//     });
+  afterEach(async (done) => {
+    await TokenType.destroy({ where: {} });
+    await Wallet.destroy({ where: {} });
+    await Transaction.destroy({ where: {} });
+    done();
+  });
 
-//     it('reliably gives provenance chain', async (done) => {
-//         let receiver3 = StellarSdk.Keypair.random();
-//         await createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, async (tObject) =>{
-//             const receiver1 = tObject.receiverKeypair;
-//             const transaction1Uuid = tObject.transaction.txn.dataValues.uuid;
-//             await createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, async (tObject2) =>{
-//                 const receiver2 = tObject2.receiverKeypair;
-//                 const transaction2Uuid = tObject2.transaction.txn.dataValues.uuid;
-//                 await createChildTransactionWithKeypair(receiver1, receiver3, transaction1Uuid, tokenType.uuid, () =>{});
-//                 await createChildTransactionWithKeypair(receiver2, receiver3, transaction2Uuid, tokenType.uuid, async () =>{
-//                     const tests = (provenanceChain) => {
-//                         expect(provenanceChain.length).toBe(2);
-//                         expect(provenanceChain[0].uuid).toBe(transaction1Uuid);
-//                         expect(provenanceChain[1].fromAddress).toBe(receiver1.publicKey());
-//                         expect(provenanceChain[1].toAddress).toBe(receiver3.publicKey());
-//                         console.log(provenanceChain.length);
-//                         done();
-//                     };
-//                     await transactions.oldestProvenanceChain({
-//                         params: {
-//                             wallet_uuid: receiver3.publicKey(),
-//                             tokentype_uuid: tokenType.uuid
-//                         }
-//                     }, new psuedoRes(tests));
-//                 });
-//             });
-//         });
-//     });
+  it('returns an accurate provenance chain', async (done) => {
+    const handleProvenanceChain = (provenanceChain) => {
+      const firstTransaction = provenanceChain[0];
+      const secondTransaction = provenanceChain[1];
+      const thirdTransaction = provenanceChain[2];
+      expect(provenanceChain.length).toBe(3);
+      expect(firstTransaction.fromAddress).toBe(firstTransaction.toAddress);
+      expect(firstTransaction.amount).toBe(secondTransaction.amount);
+      expect(firstTransaction.amount).toBe(thirdTransaction.amount);
+      expect(thirdTransaction.uuid).toBe(endTransaction.uuid);
+      done();
+    };
+    const handleShare = (latestSharedTransaction) => {
+      transactions.provenanceChain({
+          params: { transactionUuid: endTransaction.uuid }
+        }, new psuedoRes(handleProvenanceChain)
+      );
+    }
+    const tHandler = originTransaction => {
+      shareTransactionWithKeypair(
+        walletOwnerKeypair, receiverKeypair2, originTransaction.uuid, handleShare
+      );
+    };
+    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
+  });
 
-// });
+  it('redeem and provenanceChainFIFO', async (done) => {
+    let firstProvenanceChain;
+    const messageObject = {
+      transactionUuid: endTransaction.uuid
+    };
+    const signed = signObject(messageObject, walletOwnerKeypair._secretKey);
+    messageObject.signed = signed;
+
+    const tHandler = originTransaction => {
+      shareTransactionWithKeypair(
+        walletOwnerKeypair, receiverKeypair2, originTransaction.uuid, handleShare
+      );
+    };
+    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
+    const handleShare = (latestSharedTransaction) => {
+      transactions.provenanceChainFIFO({
+          params: { address: receiverKeypair2.publicKey(), tokenTypeUuid: tokenType.uuid }
+        }, new psuedoRes(handleProvenanceChain)
+      );
+    }
+    const handleProvenanceChain = (provenanceChain) => {
+      firstProvenanceChain = provenanceChain;
+      transactions.redeem({
+        body: messageObject
+      }, new psuedoRes(handleRedemption)
+      );
+    };
+    const handleRedemption = (redeemReturn) => {
+      transactions.provenanceChainFIFO({
+        params: { address: receiverKeypair2.publicKey(), tokenTypeUuid: tokenType.uuid }
+      }, new psuedoRes(handleProvenanceChain2)
+      );
+    };
+    const handleProvenanceChain2 = (provenanceChain) => {
+      const firstTransactionInChain1 = firstProvenanceChain[0];
+      const firstTransactionInChain2 = provenanceChain[0];
+      expect(firstTransactionInChain1.uuid).not.toBe(firstTransactionInChain2.uuid);
+      done();
+    };
+  });
+
+});

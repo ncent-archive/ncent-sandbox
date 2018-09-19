@@ -43,7 +43,7 @@ const shareTransactionWithKeypair = async (senderKeypair, receiverKeypair, trans
   };
   const signed = signObject(messageObj, senderPrivate);
   messageObj.signed = signed;
-  await transactions.create({
+  await transactions.share({
     body: messageObj,
     params: { transactionUuid }
   }, new psuedoRes(async (resolvedTransaction) => {

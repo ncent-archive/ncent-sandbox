@@ -3,23 +3,26 @@ const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec");
 const TOKEN_GRAVEYARD_ADDRESS = process.env.TOKEN_GRAVEYARD_ADDRESS;
-
 // Receives: publicKey, tokenTypeUuid
 // Returns: oldest transaction of a wallet that has no child transactions
 const getOldestTransaction = async (publicKey, tokenTypeUuid) => {
-  const transactions = await Transaction.findAll({
-      where: { toAddress: publicKey, tokenTypeUuid},
-      order: [["updatedAt", "DESC"]] // newest to oldest
-  });
   const parentTransactionUuids = new Set();
-  transactions.forEach((transaction) => {
-      parentTransactionUuids.add(transaction.parentTransaction);
+
+  const givenTransactions = await Transaction.findAll({
+    where: { fromAddress: publicKey, tokenTypeUuid}
   });
-  for (let i = transactions.length - 1; i >= 0; i--) {
-      const transaction = transactions[i];
-      if (!parentTransactionUuids.has(transaction.uuid)) {
-          return transaction;
-      }
+  givenTransactions.forEach((transaction) => {
+    parentTransactionUuids.add(transaction.parentTransaction);
+  });
+  const receivedTransactions = await Transaction.findAll({
+    where: { toAddress: publicKey, tokenTypeUuid},
+    order: [["updatedAt", "DESC"]] // newest to oldest
+  });
+  for (let i = receivedTransactions.length - 1; i >= 0; i--) {
+    const transaction = receivedTransactions[i];
+    if (!parentTransactionUuids.has(transaction.uuid)) {
+      return transaction;
+    }
   }
 };
 // Receives: Any transaction
@@ -190,12 +193,13 @@ const transactionsController = {
   async redeem({body}, res) {
     const { transactionUuid, signed } = body;
     const transaction = await Transaction.findById(transactionUuid);
-    const {toAddress, tokenTypeUuid, amount} = transaction;
     if (!transaction) {
       return res.status(404).send({ message: "Transaction not found" });
     }
+    const {toAddress, tokenTypeUuid, amount} = transaction;
+    const tokenType = await TokenType.findById(tokenTypeUuid);
     const reconstructedObject = { transactionUuid };
-    if (!isVerified(transaction.sponsorUuid, signed, reconstructedObject)) {
+    if (!isVerified(tokenType.sponsorUuid, signed, reconstructedObject)) {
       return res.status(403).send({
         message: "Only the TokenType sponsor can trigger redemption"
       });
@@ -205,7 +209,8 @@ const transactionsController = {
       fromAddress: toAddress,
       toAddress: TOKEN_GRAVEYARD_ADDRESS,
       amount,
-      tokenTypeUuid
+      tokenTypeUuid,
+      parentTransaction: transactionUuid
     });
     const data = { redeemWallet, transaction: newTransaction };
     res.status(200).send(data);
