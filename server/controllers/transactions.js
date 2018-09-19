@@ -61,7 +61,7 @@ const getChildrenTransactions = async (parentTransaction) => {
 
 // Receives: publicKey as string, signed transaction, unsigned transaction
 // Returns: Boolean: Was this signed by publicKey's secret key
-const isVerifiedTransaction = (publicKeyStr, signed, reconstructedObject) => {
+const isVerified = (publicKeyStr, signed, reconstructedObject) => {
   const walletBuffer = StellarSdk.StrKey.decodeEd25519PublicKey(publicKeyStr);
   const decodedObject = dec(JSON.stringify(reconstructedObject));
   const verified = nacl.sign.detached.verify(
@@ -99,7 +99,7 @@ const transactionsController = {
       return res.status(404).send({message:"Wallet !== TokenType sponsor"});
     }
     const reconstructedObject = { amount };
-    if (!isVerifiedTransaction(walletUuid, signed, reconstructedObject)) {
+    if (!isVerified(walletUuid, signed, reconstructedObject)) {
       return res.status(403).send({ message: "Invalid transaction signing" });
     }
     const newWalletBalance = wallet.balance - amount;
@@ -143,7 +143,7 @@ const transactionsController = {
       });
     }
     const reconstructedObject = { fromAddress, toAddress};
-    if (!isVerifiedTransaction(fromAddress, signed, reconstructedObject)) {
+    if (!isVerified(fromAddress, signed, reconstructedObject)) {
       return res.status(403).send({ message: "Invalid transaction signing" });
     }
     fromWallet = await fromWallet.update({
@@ -200,6 +200,37 @@ const transactionsController = {
     const transactionChain = await getProvenanceChain(oldestOwnedTransaction);
     res.status(200).send(transactionChain);
   },
+  // POST (body: { transactionUuid, signed })
+  // -> transaction w/ tokenGraveyard
+  // async redeem({body}, res) {
+  //   const { transactionUuid, signed } = body;
+  //   const transaction = await Transaction.findById(transactionUuid);
+  //   const {toAddress, tokentype_uuid, amount} = transaction;
+  //   if (!transaction) {
+  //     return res.status(404).send({ message: "Transaction not found" });
+  //   }
+  //   const reconstructedObject = { transactionUuid };
+  //   if (!isVerified(transaction.sponsor_uuid, signed, reconstructedObject)) {
+  //     return res.status(403).send({
+  //       message: "Only the TokenType sponsor can trigger redemption"
+  //     });
+  //   }
+  //   let redeemWallet = await getWallet(toAddress, tokentype_uuid);
+  //   redeemWallet = await redeemWallet.update({
+  //     balance: redeemWallet.balance - amount
+  //   });
+  //   const newTransaction = await Transaction.create({
+  //     fromAddress: toAddress,
+  //     toAddress: 'TOKEN_GRAVEYARD_PUBLIC_KEY_HERE',
+  //     amount,
+  //     tokentype_uuid
+  //   });
+  //   const data = {
+  //     redeemWallet,
+  //     txn: newTransaction
+  //   };
+  //   res.status(200).send(data);
+  // }
 };
 
 module.exports = transactionsController;

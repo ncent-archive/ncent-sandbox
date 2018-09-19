@@ -199,6 +199,7 @@ describe('transactions Controller', () => {
       };
       shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare1);
     });
+
     it('throws an error when given an invalid token_uuid', async (done) => {
       const tests = (res) => {
         expect(res.message).not.toBe(undefined);
@@ -211,6 +212,7 @@ describe('transactions Controller', () => {
         }
       }, new psuedoRes(tests));
     });
+
     it('throws an error when given an invalid wallet_uuid', async (done) => {
       const tests = (res) => {
         expect(res.message).not.toBe(undefined);
