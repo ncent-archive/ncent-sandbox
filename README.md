@@ -92,10 +92,13 @@ We also have our own instance of the sandbox hosted on AWS. To access its APIs, 
 - [Get Specific Wallet and Tokentype](#get-specific-wallet-and-tokentype)
 - [Stamp Token](#stamp-token)
 - [List Token Types](#list-token-types)
-- [Specific Token Information](#specific-token-information)
-- [Destroy Tokens](#destroy-tokens)
-- [Transfer Tokens](#transfer-tokens)
-- [List Token Transactions](#list-token-type-transactions)
+- [Get Specific Token Information](#get-specific-token-information)
+- [Get All Transactions](#get-all-transactions)
+- [Create a Challenge (Transaction)](#create-a-challenge-transaction)
+- [Share a Challenge (Transaction)](#share-a-challenge-transaction)
+- [Redeem a Challenge (Transaction)](#redeem-a-challenge-transaction)
+- [Retrieve Provenance Chain of a Transaction](#retrieve-provenance-chain-of-a-transaction)
+- [Retrieve Provenance Chain (FIFO)](#retrieve-provenance-chain-fifo)
 
 - - - -
 
@@ -131,7 +134,7 @@ None
 - - - -
 
 
-## Get Specific Wallet and Tokentype
+## Get Specific Wallet and TokenType
 #### `GET api/wallets/{address}/{tokenTypeUuid}`
 #### Description:
 Retrieve information about how much of a specific token a wallet holds
@@ -265,7 +268,7 @@ signed | String | JSON string of signed message object (signed by the TokenType 
 <br />
 
 - - - -
-## Retrieve a Provenance Chain of a Transaction
+## Retrieve Provenance Chain of a Transaction
 #### `GET /api/transactions/{transactionUuid}`
 #### Description:
 Retrieves the provenance of a transaction via its parentTransactions
@@ -279,7 +282,7 @@ none
 <br />
 
 - - - -
-## Retrieve a Provenance Chain (FIFO)
+## Retrieve Provenance Chain (FIFO)
 #### `GET /api/transactions/{tokenTypeUuid}/{address}`
 #### Description:
 Retrieves the provenance of a publicKey's first owned challenge of a specific TokenType
