@@ -6,13 +6,7 @@
 ## Introduction
 The nCent Sandbox allows you to run a server that mimics the nCent Core Protocol. In its current stage, it stores the information on the tokentypes, transactions and wallets on a (PostgreSQL) database.
 
-The Sandbox API is detailed [here](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/routes/index.js).
-
-The request handling is implemented in the [controllers directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/controllers).
-
-The database schema and migrations are handled in the [models directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/models) and [migrations directory](https://github.com/ncent/ncent.github.io/tree/master/Sandbox/Sandbox%20API/server/migrations), respectively.
-
-The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbox/Sandbox%20API/server/config/config.js) handles the location and details of the database.
+The Sandbox API routes are detailed [here](/server/routes/index/js).
 
 ## Installation
 
@@ -21,11 +15,12 @@ The [config.js file](https://github.com/ncent/ncent.github.io/blob/master/Sandbo
 First install docker locally: https://www.docker.com/products/docker-desktop
 
 #### Create a secret.env
-```
+```bash
 DB_USERNAME=postgres
 DB_PASSWORD=dickey
 DB_HOST=docker.for.mac.host.internal
 DB_PORT=5432
+TOKEN_GRAVEYARD_ADDRESS=#valid publicKey
 VERSION=local_v
 ```
 
@@ -37,6 +32,7 @@ postgres=# SHOW config_file;
 Navigate to your pg_hba.conf file and add this line:
 `host    ncent-db        all             172.17.0.0/16           trust`
 Navigate to your postgresql.conf file and change the following:
+
 `#listen_addresses = 'localhost'` to `#listen_addresses = '*'`
 
 #### Run a Postgres server and build/run the sandbox docker image
@@ -104,7 +100,7 @@ We also have our own instance of the sandbox hosted on AWS. To access its APIs, 
 - - - -
 
 ## Get All Wallets
-#### `GET /wallets`
+#### `GET /api/wallets`
 #### Description:
 Retrieve information about all wallets.
 #### Paramters:
@@ -119,13 +115,13 @@ None
 
 
 ## Get Specific Wallet
-#### `GET /wallets/{wallet_uuid}`
+#### `GET api/wallets/{address}`
 #### Description:
 Retrieve information about a specific wallet
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-wallet_uuid | String | Valid wallet public key
+address | String | Valid wallet public key
 #### Body:
 None
 
@@ -136,14 +132,14 @@ None
 
 
 ## Get Specific Wallet and Tokentype
-#### `GET /wallets/{wallet_uuid}/{tokentype_uuid}`
+#### `GET api/wallets/{address}/{tokenTypeUuid}`
 #### Description:
 Retrieve information about how much of a specific token a wallet holds
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-wallet_uuid | String | Valid wallet public key
-tokentype_uuid | String | Valid unique tokentype id
+address | String | Valid wallet public key
+tokenTypeUuid | String | Valid TokenTypeUUID
 #### Body:
 None
 
@@ -153,18 +149,18 @@ None
 - - - -
 
 ## Stamp Token
-#### `POST /tokentypes`
+#### `POST api/tokentypes`
 #### Description:
-Instantiate a new token type. In the current implementation creates new tokens from nothing. In production, one can only stamp existant nCent into a new token type.
+Instantiate a new token type. In the current implementation, this creates new tokens from nothing. In production, one can only stamp nCent into a new TokenType
 #### Parameters:
 None
 #### Body:
 Name  | Type | Description
 --- | --- | ---
-sponsor_uuid | String | Valid wallet public key of token sponsor
-Name | String | Token Name
+sponsorUuid | String | Valid public key of token sponsor
+name | String | Token Name
 totalTokens | Int | Number of tokens to be stamped
-ExpiryDate | Date Object | The expiration date of the tokens stamped into existance
+expiryDate | Date Object | The expiration date of the tokens stamped into existance
 
 - - - -
 <br />
@@ -172,9 +168,9 @@ ExpiryDate | Date Object | The expiration date of the tokens stamped into exista
 - - - -
 
 ## List Token Types
-#### `GET /tokentypes`
+#### `GET api/tokentypes`
 #### Description:
-List all token types
+Lists all token types and the transactions associated with them
 #### Parameters:
 None
 #### Body:
@@ -185,14 +181,14 @@ None
 
 - - - -
 
-## Specific Token Information
-#### `GET /tokentypes/{tokentype_uuid}`
+## Get Specific Token Information
+#### `GET api/tokentypes/{tokenTypeUuid}`
 #### Description:
-List information about a specific token type
+Lists information about a specific token type and the transactions associated with it
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-tokentype_uuid | String | Unique identifier for a specific token type
+tokenTypeUuid | String | Unique identifier for a specific token type
 #### Body:
 None
 
@@ -201,46 +197,100 @@ None
 
 - - - -
 
-## Transfer Tokens
-#### `POST /tokentypes/{tokentype_uuid}/items`
+## Get All Transactions
+#### `GET api/transactions/`
 #### Description:
-Transfer tokens from one account to another. Must be
+Gets all transactions
+#### Parameters:
+none
+#### Body:
+none
+- - - -
+<br />
+
+- - - -
+
+## Create a Challenge (Transaction)
+#### `POST /api/transactions/{tokenTypeUuid}/{address}`
+#### Description:
+Creates a challenge from the wallet of a TokenType creator to be shared with another wallet.
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-tokentype_uuid | String | Unique identifier for a specific token type
+tokenTypeUuid | String | Unique identifier for a specific token type
+address | String | Valid Wallet address
 #### Body:
 Name  | Type | Description
 --- | --- | ---
 amount | Int | Amount of TokenType to transfer
-fromAddress | String | Valid public key of sender
-toAddress | String | Valid public key of receiver
 signed | String | JSON string of signed message object
-#### Response:
-#### Possible Errors:
 
 - - - -
 <br />
 
 - - - -
 
-## List Token Type Transactions
-#### `GET /tokentypes/{tokentype_uuid}/items`
+## Share a Challenge (Transaction)
+#### `POST /api/transactions/{transactionUuid}`
 #### Description:
-List transaction history of a specific token type
+Shares a challenge via a transaction from one wallet to another
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-tokentype_uuid | String | Unique identifier for a specific token type
+transactionUuid | String | Unique identifier for a specific token type
 #### Body:
-None
+Name  | Type | Description
+--- | --- | ---
+fromAddress | String | Valid public key of sender
+toAddress | String | Valid public key of receiver
+signed | String | JSON string of signed message object
 
 - - - -
 <br />
 
 - - - -
 
+## Redeem a Challenge (Transaction)
+#### `POST /api/transactions/redeem`
+#### Description:
+Redeems a challenge from a wallet
+#### Parameters:
+none
+#### Body:
+Name  | Type | Description
+--- | --- | ---
+transactionUuid | Int | Unique identifier for a transaction
+signed | String | JSON string of signed message object (signed by the TokenType creator)
+- - - -
+<br />
 
+- - - -
+## Retrieve a Provenance Chain of a Transaction
+#### `GET /api/transactions/{transactionUuid}`
+#### Description:
+Retrieves the provenance of a transaction via its parentTransactions
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+transactionUuid | String | Unique identifier for a specific transaction
+#### Body:
+none
+- - - -
+<br />
+
+- - - -
+## Retrieve a Provenance Chain (FIFO)
+#### `GET /api/transactions/{tokenTypeUuid}/{address}`
+#### Description:
+Retrieves the provenance of a publicKey's first owned challenge of a specific TokenType
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+address | String | Valid Wallet public key
+tokenTypeUuid | String | Valid UUID of a TokenType
+#### Body:
+none
+- - - -
 ## Structural Assumptions
 1. Fungible tokens for all stamped token types
 2. Database includes wallet (which has balances for each coin type) and token type (with transaction history under them)
@@ -268,5 +318,3 @@ None
 3.  Wallet:
 	- UUID
 	- Wallet_UUID
-	- Tokentype_UUID
-	- Balance

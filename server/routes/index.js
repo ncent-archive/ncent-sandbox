@@ -6,6 +6,10 @@ module.exports = (app) => {
   app.get('/api', (req, res) => res.status(200).send({
     message: 'Welcome to the NCNT API!',
   }));
+  
+  app.get('/api/wallets', walletsController.listAll);
+  app.get('/api/wallets/:address', walletsController.retrieve);
+  app.get('/api/wallets/:address/:tokenTypeUuid', walletsController.retrieveBalance);
 
   app.post('/api/tokentypes', tokentypesController.create);
   app.get('/api/tokentypes', tokentypesController.listAll);
@@ -14,11 +18,9 @@ module.exports = (app) => {
   app.get('/api/transactions/', transactionsController.list);
   app.post('/api/transactions/:tokenTypeUuid/:address', transactionsController.create);
   app.post('/api/transactions/:transactionUuid', transactionsController.share);
+  app.post('/api/transactions/redeem', transactionsController.redeem);
   app.get("/api/transactions/:transactionUuid", transactionsController.provenanceChain);
   app.get("/api/transactions/:tokenTypeUuid/:address", transactionsController.provenanceChainFIFO);
-
-  app.get('/api/wallets', walletsController.listAll);
-  app.get('/api/wallets/:address', walletsController.retrieve);
 
   // For any other request
   app.all('/api/', (_, res) => {
