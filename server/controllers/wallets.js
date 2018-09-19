@@ -66,7 +66,6 @@ const walletsController = {
       }
       let balance;
       if (address === tokenType.sponsorUuid) {
-        console.log("CALCULATING WALLET OWNER BALANCE");
         balance = await calculateWalletOwnerBalance(address, tokenType);
       } else {
         balance = await calculateWalletBalance(address, tokenTypeUuid);

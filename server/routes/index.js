@@ -21,9 +21,4 @@ module.exports = (app) => {
   app.post('/api/transactions/redeem', transactionsController.redeem);
   app.get("/api/transactions/:transactionUuid", transactionsController.provenanceChain);
   app.get("/api/transactions/:tokenTypeUuid/:address", transactionsController.provenanceChainFIFO);
-
-  // For any other request
-  app.all('/api/', (_, res) => {
-    res.status(405).send({ message: 'Method Not Allowed' });
-  });
 };

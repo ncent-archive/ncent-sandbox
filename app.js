@@ -14,8 +14,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // Setup a default catch-all route that sends back a welcome message in JSON format.
 require('./server/routes')(app);
-app.get('*', (req, res) => res.status(200).send({
-  message: 'Welcome git to the beginning of nothingness.',
+app.get('*', (_, res) => res.status(405).send({
+  message: 'Invalid request',
 }));
 
 module.exports = app;
