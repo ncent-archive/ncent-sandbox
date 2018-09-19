@@ -89,7 +89,7 @@ We also have our own instance of the sandbox hosted on AWS. To access its APIs, 
 
 - [Get All Wallets](#get-all-wallets)
 - [Get Specific Wallet](#get-specific-wallet)
-- [Get Specific Wallet and Tokentype](#get-specific-wallet-and-tokentype)
+- [Get Wallet Balance](#get-wallet-balance)
 - [Stamp Token](#stamp-token)
 - [List Token Types](#list-token-types)
 - [Get Specific Token Information](#get-specific-token-information)
@@ -134,7 +134,7 @@ None
 - - - -
 
 
-## Get Specific Wallet and TokenType
+## Get Wallet Balance
 #### `GET api/wallets/{address}/{tokenTypeUuid}`
 #### Description:
 Retrieve information about how much of a specific token a wallet holds
