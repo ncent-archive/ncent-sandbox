@@ -8,24 +8,26 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       defaultValue: DataTypes.UUIDV4,
     },
+    parentTransaction:{
+      type: DataTypes.UUID,
+      allowNull: true
+    },
     amount: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
     fromAddress:{
-      //type: DataTypes.UUID,
       type: DataTypes.STRING,
       allowNull: false
     },
     toAddress:{
-      //type: DataTypes.UUID,
       type: DataTypes.STRING,
       allowNull:false
     },
   });
   Transaction.associate = function(models) {
     Transaction.belongsTo(models.TokenType, {
-	    foreignKey: 'tokentype_uuid',
+	    foreignKey: 'tokenTypeUuid',
 	    onDelete: 'CASCADE',
     });
   };

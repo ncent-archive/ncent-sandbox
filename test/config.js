@@ -1,3 +1,5 @@
+const StellarSdk = require("stellar-sdk");
+
 // This overrides the jest buffer's prototype for compatability with nacl
 Object.setPrototypeOf(global.Buffer.prototype, global.Uint8Array.prototype);
 
@@ -21,5 +23,11 @@ global.signObject = (messageObject, secretKey) => {
   const signed = require('tweetnacl').sign.detached(msg, secretKey);
   return JSON.stringify(Array.from(signed));
 };
+
+process.env.TOKEN_GRAVEYARD_ADDRESS = StellarSdk.Keypair.random().publicKey();
+
+global.shareTransaction = require("./utils").shareTransaction;
+global.shareTransactionWithKeypair = require("./utils").shareTransactionWithKeypair;
+global.createOriginTransaction = require("./utils").createOriginTransaction;
 
 global.psuedoRes = psuedoRes;

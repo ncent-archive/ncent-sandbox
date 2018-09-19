@@ -1,59 +1,80 @@
-const Wallet = require('../models').Wallet;
+const {Wallet, TokenType, Transaction, Sequelize} = require('../models');
+const Op = Sequelize.Op;
+const calculateWalletOwnerBalance = async (publicKey, tokenType) => {
+  let balance = tokenType.totalTokens;
+  const fromTransactions = await Transaction.findAll({ where: {
+    fromAddress: publicKey,
+    toAddress: {
+      [Op.ne]: publicKey // to avoid the challenge transactions (from === to)
+  }}});
+  fromTransactions.forEach((transaction) => {
+    balance -= transaction.amount;
+  });
+  return balance;
+}
 
-module.exports = {
-  create(req, res) {
-    return Wallet
-      .create({
-        wallet_uuid: req.body.wallet_uuid,
-        tokentype_uuid: req.body.tokentype_uuid,
-        balance: req.body.balance
-      })
-      .then(wallet => res.status(201).send(wallet))
-      .catch(error => res.status(400).send(error));
+const calculateWalletBalance = async (publicKey, tokenTypeUuid) => {
+  let balance = 0;
+  const toTransactions = await Transaction.findAll({
+    where: { toAddress: publicKey, tokenTypeUuid }
+  });
+  const fromTransactions = await Transaction.findAll({
+    where: { fromAddress: publicKey, tokenTypeUuid }
+  });
+  toTransactions.forEach((transaction) => {
+    balance += transaction.amount;
+  });
+  fromTransactions.forEach((transaction) => {
+    balance -= transaction.amount;
+  });
+  return balance;
+}
+
+const walletsController = {
+  async listAll(_, res) {
+    try {
+      const allWallets = await Wallet.findAll({});
+      res.status(200).send(allWallets);
+    } catch (e) {
+      res.status(400).send(e);
+    }
   },
-  listAll(req, res) {
-    return Wallet
-      .findAll({
-      })
-      .then(wallets => res.status(200).send(wallets))
-      .catch(error => res.status(400).send(error));
-  },
-  listSome(req, res) {
-    return Wallet
-      .findAll({
-        where: {
-          wallet_uuid: req.params.wallet_uuid,
-        }
-      })
-      .then(wallet => {
-        if (!wallet) {
-          return res.status(404).send({
-            message: 'Wallet Not Found',
-          });
-        } else {
-          return res.status(200).send(wallet);
-        }
-      })
-      .catch(error => res.status(400).send(error));
-  },
-  // TODO modify retrieve function to use findOne instead of findAll
-  retrieve(req, res) {
-    return Wallet
-    .findAll({
-      where: {
-        wallet_uuid: req.params.wallet_uuid,
-        tokentype_uuid: req.params.tokentype_uuid,
+
+  async retrieve({ params }, res) {
+    const { address } = params;
+    try {
+      const wallet = await Wallet.findOne({ where: { address } });
+      if (!wallet) {
+        return res.status(404).send({ message: 'Wallet not found' });
       }
-    })
-    .then(wallet => {
-      if (!wallet || wallet.length < 1 ) {
-        return res.status(404).send({
-          message: 'Balance for Wallet Not Found',
-        });
+      res.status(200).send(wallet);
+    } catch (e) {
+      res.status(400).send(e);
+    }
+  },
+
+  async retrieveBalance({ params }, res) {
+    const { address, tokenTypeUuid } = params;
+    try {
+      const wallet = await Wallet.findOne({ where: { address } });
+      if (!wallet) {
+        return res.status(404).send({ message: 'Wallet not found' });
+      }
+      const tokenType = await TokenType.findById(tokenTypeUuid);
+      if (!tokenType) {
+        return res.status(404).send({ message: 'TokenType not found' });
+      }
+      let balance;
+      if (address === tokenType.sponsorUuid) {
+        balance = await calculateWalletOwnerBalance(address, tokenType);
       } else {
-        return res.status(200).send(wallet);
+        balance = await calculateWalletBalance(address, tokenTypeUuid);
       }
-    })
-    .catch(error => res.status(400).send(error));
+      res.status(200).send({wallet, balance});
+    } catch (e) {
+      res.status(400).send(e);
+    }
   }
 };
+
+module.exports = walletsController;

@@ -4,7 +4,7 @@ module.exports = {
     return queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
     .then(() => {
       return queryInterface.createTable('TokenTypes', {
-        Name: {
+        name: {
 	        type: DataTypes.STRING, 
           allowNull: false,
           unique: true
@@ -15,12 +15,11 @@ module.exports = {
 	        allowNull: false,
           autoIncrement: false,
         },
-        ExpiryDate: {
+        expiryDate: {
           type: DataTypes.DATE,
           allowNull: false
         },
-        sponsor_uuid: {
-          //type: DataTypes.UUID,
+        sponsorUuid: {
           type: DataTypes.STRING,
           allowNull: false,
         },
@@ -28,18 +27,6 @@ module.exports = {
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-          // ValueEscrowRate: {
-          //   type: DataTypes.FLOAT,
-          //   allowNull: false
-          // },
-          // CashoutRate: {
-          //   type: DataTypes.FLOAT,
-          //   allowNull: false,
-          // },
-          // ProvenanceLength: {
-          //   type: DataTypes.INTEGER,
-          // },
-          // Lambda: DataTypes.FLOAT,
         createdAt: {
           allowNull: false,
           type: DataTypes.DATE
