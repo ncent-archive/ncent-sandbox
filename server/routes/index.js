@@ -17,8 +17,8 @@ module.exports = (app) => {
 
   app.get('/api/transactions/', transactionsController.list);
   app.post('/api/transactions/:tokenTypeUuid/:address', transactionsController.create);
-  app.post('/api/transactions/:transactionUuid', transactionsController.share);
   app.post('/api/transactions/redeem', transactionsController.redeem);
+  app.post('/api/transactions/:transactionUuid', transactionsController.share);
   app.get("/api/transactions/:transactionUuid", transactionsController.provenanceChain);
   app.get("/api/transactions/:tokenTypeUuid/:address", transactionsController.provenanceChainFIFO);
 };

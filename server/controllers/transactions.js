@@ -149,7 +149,7 @@ const transactionsController = {
       parentTransaction: transactionUuid,
       tokenTypeUuid: transaction.tokenTypeUuid
     });
-    const data = { fromWallet, toWallet, txn: newTransaction };
+    const data = { fromWallet, toWallet, transaction: newTransaction };
     res.status(200).send(data);
   },
   // GET (params: {transactionUuid})

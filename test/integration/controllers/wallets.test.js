@@ -27,12 +27,12 @@ describe('wallet retrieveBalance', () => {
     createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
     const handleShare1 = sharedTransaction => {
       receiverKeypair1 = sharedTransaction.receiverKeypair;
-      const transaction2 = sharedTransaction.transaction.txn;
+      const transaction2 = sharedTransaction.transaction.transaction;
       shareTransaction(receiverKeypair1, transaction2.uuid, handleShare2);
     };
     const handleShare2 = async sharedTransaction => {
       receiverKeypair2 = sharedTransaction.receiverKeypair;
-      endTransaction = sharedTransaction.transaction.txn;
+      endTransaction = sharedTransaction.transaction.transaction;
       done();
     }
   });
