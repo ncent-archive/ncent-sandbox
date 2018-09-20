@@ -55,8 +55,8 @@ describe('transactions Controller', () => {
     });
 
     it('persists a created transaction to the database', async (done) => {
-      const txn = await Transaction.findById(transaction.uuid);
-      expect(txn).not.toBe(undefined);
+      const retrievedTransaction = await Transaction.findById(transaction.uuid);
+      expect(retrievedTransaction).not.toBe(undefined);
       done();
     });
     
@@ -117,12 +117,12 @@ describe('transactions Controller', () => {
       let receiverKeypair2;
       const handleShare1 = async sharedTransaction => {
         receiverKeypair1 = sharedTransaction.receiverKeypair;
-        const transaction2 = sharedTransaction.transaction.txn;
+        const transaction2 = sharedTransaction.transaction.transaction;
         shareTransaction(receiverKeypair1, transaction2.uuid, handleShare2);
       };
       const handleShare2 = async sharedTransaction => {
         receiverKeypair2 = sharedTransaction.receiverKeypair;
-        const transaction3 = sharedTransaction.transaction.txn;
+        const transaction3 = sharedTransaction.transaction.transaction;
         await transactions.provenanceChain({
             params: { transactionUuid: transaction3.uuid}
           }, new psuedoRes(handleProvenanceChain)
@@ -148,7 +148,7 @@ describe('transactions Controller', () => {
       let receiverKeypair2;
       const handleShare1 = async sharedTransaction => {
         receiverKeypair1 = sharedTransaction.receiverKeypair;
-        const transaction2 = sharedTransaction.transaction.txn;
+        const transaction2 = sharedTransaction.transaction.transaction;
         shareTransaction(receiverKeypair1, transaction2.uuid, handleShare2);
       };
       const handleShare2 = async sharedTransaction => {
