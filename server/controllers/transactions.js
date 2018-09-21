@@ -2,8 +2,7 @@ const { Transaction, Wallet, TokenType } = require('../models');
 const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec");
-const TOKEN_GRAVEYARD_ADDRESS =
-  "GDFZBBP2MUSOY2PEQRW7L4ZXNACUS4LSEMSPJ7YOVIWR63ITCK2BECIW";
+const TOKEN_GRAVEYARD_ADDRESS = process.env.TOKEN_GRAVEYARD_ADDRESS;
 // Receives: publicKey, tokenTypeUuid
 // Returns: oldest transaction of a wallet that has no child transactions
 const getOldestTransaction = async (publicKey, tokenTypeUuid) => {
