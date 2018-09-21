@@ -24,8 +24,6 @@ global.signObject = (messageObject, secretKey) => {
   return JSON.stringify(Array.from(signed));
 };
 
-process.env.TOKEN_GRAVEYARD_ADDRESS = StellarSdk.Keypair.random().publicKey();
-
 global.shareTransaction = require("./utils").shareTransaction;
 global.shareTransactionWithKeypair = require("./utils").shareTransactionWithKeypair;
 global.createOriginTransaction = require("./utils").createOriginTransaction;

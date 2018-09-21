@@ -14,16 +14,6 @@ The Sandbox API routes are detailed [here](/server/routes/index/js).
 
 First install docker locally: https://www.docker.com/products/docker-desktop
 
-#### Create a secret.env
-```bash
-DB_USERNAME=postgres
-DB_PASSWORD=dickey
-DB_HOST=docker.for.mac.host.internal
-DB_PORT=5432
-TOKEN_GRAVEYARD_ADDRESS=#valid publicKey
-VERSION=local_v
-```
-
 #### Configure postgres
 ```
 psql -U postgres
@@ -34,6 +24,8 @@ Navigate to your pg_hba.conf file and add this line:
 Navigate to your postgresql.conf file and change the following:
 
 `#listen_addresses = 'localhost'` to `#listen_addresses = '*'`
+
+Change your postgres user's password to dickey
 
 #### Run a Postgres server and build/run the sandbox docker image
 ```bash
