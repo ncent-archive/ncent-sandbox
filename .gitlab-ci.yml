@@ -22,7 +22,7 @@ build_production:
   stage: build_production
   script:
     - $(aws ecr get-login --no-include-email --region us-east-2)
-    - docker build --build-arg DB_USERNAME=$PRODUCTION_DB_USERNAME --build-arg DB_PASSWORD=$PRODUCTION_DB_PASSWORD --build-arg DB_HOST=$PRODUCTION_DB_HOST --build-arg DB_PORT=$PRODUCTION_DB_PORT --build-arg VERSION=$VERSION . -t ncent-sandbox
+    - docker build --build-arg TOKEN_GRAVEYARD_ADDRESS=$TOKEN_GRAVEYARD_ADDRESS --build-arg DB_NAME=$PRODUCTION_DB_NAME --build-arg DB_USERNAME=$PRODUCTION_DB_USERNAME --build-arg DB_PASSWORD=$PRODUCTION_DB_PASSWORD --build-arg DB_HOST=$PRODUCTION_DB_HOST --build-arg DB_PORT=$PRODUCTION_DB_PORT --build-arg VERSION=$VERSION . -t ncent-sandbox
     - docker tag ncent-sandbox:latest $REPOSITORY_URL:latest
     - docker push $REPOSITORY_URL
   only:
