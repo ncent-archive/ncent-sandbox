@@ -126,9 +126,11 @@ const transactionsController = {
     if (fromAddress !== transaction.toAddress) {
       return res.status(403).send({ message: "Unauthorized transfer" });
     }
-    const childrenTransactions = await getChildrenTransactions(transactionUuid);
-    if (childrenTransactions.length > 0) {
-      return res.status(403).send({ message: "Transaction was transferred already" });
+    if (transaction.fromAddress !== transaction.toAddress) {
+        const childrenTransactions = await getChildrenTransactions(transactionUuid);
+        if (childrenTransactions.length > 0) {
+            return res.status(403).send({ message: "Transaction was transferred already" });
+        }
     }
     let fromWallet = await Wallet.findOne({ where: { address: fromAddress } });
     if (!fromWallet) {
