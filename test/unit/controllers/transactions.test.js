@@ -76,7 +76,7 @@ describe('transactions Controller', () => {
       const tHandler = (transactionObject) => {
         expect(transactionObject.message).toBe('Inadequate wallet balance');
         done();
-      }
+      };
       createOriginTransaction(
         walletOwnerKeypair, tokenType.uuid, INITIAL_WALLET_AMOUNT+1, tHandler
       );
@@ -108,7 +108,7 @@ describe('transactions Controller', () => {
       };
       shareTransaction(walletOwnerKeypair, transaction.uuid, handleShare);
     });
-  })
+  });
 
 
   describe('provenanceChain', () => {
@@ -127,7 +127,7 @@ describe('transactions Controller', () => {
             params: { transactionUuid: transaction3.uuid}
           }, new psuedoRes(handleProvenanceChain)
         );
-      }
+      };
       const handleProvenanceChain = (provenanceChain) => {
         const firstTransaction = provenanceChain[0];
         const secondTransaction = provenanceChain[1];
@@ -160,7 +160,7 @@ describe('transactions Controller', () => {
           }
         }, new psuedoRes(handleProvenanceChain)
         );
-      }
+      };
       const handleProvenanceChain = (provenanceChain) => {
         const firstTransaction = provenanceChain[0];
         const secondTransaction = provenanceChain[1];

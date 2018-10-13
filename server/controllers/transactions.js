@@ -35,27 +35,25 @@ const getProvenanceChain = async (transaction) => {
       transaction = await Transaction.findById(transaction.parentTransaction);
   } while (transaction);
   return transactionChain;
-}
+};
 
 const getChildrenTransactions = async (parentTransaction) => {
-  const childrenTransactions = await Transaction.findAll({
+  return await Transaction.findAll({
     where: { parentTransaction }
   });
-  return childrenTransactions;
-}
+};
 
 // Receives: publicKey as string, signed transaction, unsigned transaction
 // Returns: Boolean: Was this signed by publicKey's secret key
 const isVerified = (publicKeyStr, signed, reconstructedObject) => {
   const walletBuffer = StellarSdk.StrKey.decodeEd25519PublicKey(publicKeyStr);
   const decodedObject = dec(JSON.stringify(reconstructedObject));
-  const verified = nacl.sign.detached.verify(
+  return nacl.sign.detached.verify(
     decodedObject,
     Uint8Array.from(JSON.parse(signed)),
     walletBuffer
   );
-  return verified;
-}
+};
 // Receives: sponsor public key and tokentype uuid
   // finds all transactions w/ both (should be just issued challenges)
   // adds amounts
@@ -69,7 +67,7 @@ const totalIssuedTokens = async (sponsorUuid, tokenTypeUuid) => {
     issuedTokensCount += challengeTransaction.amount;
   });
   return issuedTokensCount;
-}
+};
 
 const transactionsController = {
   // GET ()
