@@ -1,4 +1,4 @@
-const { Transaction, Wallet, TokenType } = require('../models');
+const { Transaction, Wallet, TokenType, Challenge } = require('../models');
 const nacl = require("tweetnacl");
 const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec");
@@ -54,20 +54,6 @@ const isVerified = (publicKeyStr, signed, reconstructedObject) => {
     walletBuffer
   );
 };
-// Receives: sponsor public key and tokentype uuid
-  // finds all transactions w/ both (should be just issued challenges)
-  // adds amounts
-// Returns: Amount of issued tokens for a tokenType
-const totalIssuedTokens = async (sponsorUuid, tokenTypeUuid) => {
-  let issuedTokensCount = 0;
-  const challenges = await Transaction.findAll({
-    where: { fromAddress: sponsorUuid, toAddress: sponsorUuid, tokenTypeUuid }
-  });
-  challenges.forEach((challengeTransaction) => {
-    issuedTokensCount += challengeTransaction.amount;
-  });
-  return issuedTokensCount;
-};
 
 const transactionsController = {
   // GET ()
@@ -81,51 +67,47 @@ const transactionsController = {
   // POST (params: {walletUuid, tokenTypeUuid}, body: {amount, signed})
     // -> createdTransaction // this is just the "challenge" issued to creator
   async create({body, params}, res) {
-    const { address, tokenTypeUuid } = params;
+    const { address, challengeUuid } = params;
     const signed = body.signed;
     const amount = parseInt(body.amount, 10);
     const wallet = await Wallet.findOne({ where: { address } });
     if (!wallet) {
       return res.status(404).send({ message: "Wallet not found" });
     }
-    const tokenType = await TokenType.findById(tokenTypeUuid);
-    if (!tokenType) {
-      return res.status(404).send({ message: "TokenType not found" });
+    const challenge = await Challenge.findById(challengeUuid);
+    if (!challenge) {
+      return res.status(404).send({ message: "Challenge not found" });
     }
-    if (tokenType.sponsorUuid !== address) {
-      return res.status(404).send({message:"Wallet !== TokenType sponsor"});
+    if (challenge.sponsorWalletAddress !== address) {
+      return res.status(404).send({message:"Wallet !== Challenge sponsor"});
     }
     const reconstructedObject = { amount };
     if (!isVerified(address, signed, reconstructedObject)) {
       return res.status(403).send({ message: "Invalid transaction signing" });
     }
-    const issuedTokenCount = await totalIssuedTokens(address, tokenTypeUuid);
-    const newWalletBalance = tokenType.totalTokens - issuedTokenCount - amount;
-    if (newWalletBalance < 0) {
-      return res.status(403).send({ message: "Inadequate wallet balance" });
-    }
     const transaction = await Transaction.create({
       amount,
       fromAddress: address,
       toAddress: address,
-      tokenTypeUuid
+      challengeUuid
     });
     res.status(200).send(transaction);
   },
   //POST (params: {transactionUuid}, body: {fromAddress, toAddress, signed})
-    // -> transaction between fromAddress and toAddress, tranferring "challenge"
+    // -> transaction between fromAddress and toAddress, transferring "challenge"
   async share({ body, params }, res) {
-    const { transactionUuid } = params;
+    const { challengeUuid } = params;
     const { fromAddress, toAddress, signed } = body;
-    const transaction = await Transaction.findById(transactionUuid);
-    if (!transaction) {
-      return res.status(404).send({ message: "Transaction not found" });
+    const challenge = await Challenge.findById(challengeUuid);
+    const lastTransaction = challenge.transactions[challenge.transactions.length - 1];
+    if (!challenge) {
+      return res.status(404).send({ message: "Challenge not found" });
     }
-    if (fromAddress !== transaction.toAddress) {
+    if (fromAddress !== lastTransaction.toAddress) {
       return res.status(403).send({ message: "Unauthorized transfer" });
     }
-    if (transaction.fromAddress !== transaction.toAddress) {
-        const childrenTransactions = await getChildrenTransactions(transactionUuid);
+    if (lastTransaction.fromAddress !== lastTransaction.toAddress) {
+        const childrenTransactions = await getChildrenTransactions(lastTransaction.uuid);
         if (childrenTransactions.length > 0) {
             return res.status(403).send({ message: "Transaction was transferred already" });
         }
@@ -145,9 +127,9 @@ const transactionsController = {
     const newTransaction = await Transaction.create({
       toAddress,
       fromAddress,
-      amount: transaction.amount,
-      parentTransaction: transactionUuid,
-      tokenTypeUuid: transaction.tokenTypeUuid
+      amount: challenge.rewardAmount,
+      parentTransaction: lastTransaction.uuid,
+      challengeUuid
     });
     const data = { fromWallet, toWallet, transaction: newTransaction };
     res.status(200).send(data);
@@ -193,11 +175,15 @@ const transactionsController = {
   async redeem({body}, res) {
     const { transactionUuid, signed } = body;
     const transaction = await Transaction.findById(transactionUuid);
+    const challenge = await Transaction.findById(transaction.challengeUuid);
     if (!transaction) {
       return res.status(404).send({ message: "Transaction not found" });
     }
-    const {toAddress, tokenTypeUuid, amount} = transaction;
-    const tokenType = await TokenType.findById(tokenTypeUuid);
+    if (!challenge) {
+      return res.status(404).send({ message: "Challenge not found" });
+    }
+    const {toAddress, amount} = transaction;
+    const tokenType = await TokenType.findById(challenge.tokenTypeUuid);
     const reconstructedObject = { transactionUuid };
     if (!isVerified(tokenType.sponsorUuid, signed, reconstructedObject)) {
       return res.status(403).send({
@@ -209,10 +195,11 @@ const transactionsController = {
       fromAddress: toAddress,
       toAddress: TOKEN_GRAVEYARD_ADDRESS,
       amount,
-      tokenTypeUuid,
+      tokenTypeUuid: challenge.tokenTypeUuid,
       parentTransaction: transactionUuid
     });
-    const data = { redeemWallet, transaction: newTransaction };
+    const redeemedChallenge = await Challenge.update({isRedeemed: true});
+    const data = { redeemWallet, transaction: newTransaction, challenge: redeemedChallenge };
     res.status(200).send(data);
   }
 };

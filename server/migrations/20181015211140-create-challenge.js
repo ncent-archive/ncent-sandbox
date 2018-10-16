@@ -15,6 +15,28 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       },
+      tokenTypeUuid: {
+          allowNull: false,
+          type: Sequelize.UUID,
+          foreignKey: true,
+          onDelete: 'CASCADE',
+          references: {
+              model: 'TokenTypes',
+              key: 'uuid',
+              as: 'tokenTypeUuid'
+          }
+      },
+      rewardAmount: {
+        allowNull: false,
+        type: Sequelize.INTEGER
+      },
+      sponsorWalletAddress: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
+      isRedeemed: {
+        type: Sequelize.BOOLEAN
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

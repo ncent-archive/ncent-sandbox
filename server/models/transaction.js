@@ -26,8 +26,8 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
   Transaction.associate = function(models) {
-    Transaction.belongsTo(models.TokenType, {
-	    foreignKey: 'tokenTypeUuid',
+    Transaction.belongsTo(models.Challenge, {
+	    foreignKey: 'challengeUuid',
 	    onDelete: 'CASCADE',
     });
   };

@@ -1,6 +1,7 @@
 const tokentypesController = require('../controllers').tokentypes;
 const transactionsController = require('../controllers').transactions;
 const walletsController = require('../controllers').wallets;
+const challengesController = require('../controllers').challenges;
 
 module.exports = (app) => {
   app.get('/api', (req, res) => res.status(200).send({
@@ -16,9 +17,12 @@ module.exports = (app) => {
   app.get('/api/tokentypes/:tokenTypeUuid', tokentypesController.listOne);
 
   app.get('/api/transactions/', transactionsController.list);
-  app.post('/api/transactions/:tokenTypeUuid/:address', transactionsController.create);
+  app.post('/api/transactions/:challengeUuid/:address', transactionsController.create);
   app.post('/api/transactions/redeem', transactionsController.redeem);
-  app.post('/api/transactions/:transactionUuid', transactionsController.share);
+  app.post('/api/transactions/:challengeUuid', transactionsController.share);
   app.get("/api/transactions/:transactionUuid", transactionsController.provenanceChain);
   app.get("/api/transactions/:tokenTypeUuid/:address", transactionsController.provenanceChainFIFO);
+
+  app.get('/api/challenges/', challengesController.list);
+  app.post('/api/challenges/:address', challengesController.create);
 };
