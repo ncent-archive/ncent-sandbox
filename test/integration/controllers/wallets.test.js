@@ -23,7 +23,7 @@ describe('wallet retrieveBalance', () => {
     await Wallet.create({ address: walletOwnerKeypair.publicKey() });
     const tHandler = originTransaction => {
       shareTransaction(walletOwnerKeypair, originTransaction.uuid, handleShare1);
-    }
+    };
     createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
     const handleShare1 = sharedTransaction => {
       receiverKeypair1 = sharedTransaction.receiverKeypair;
@@ -49,7 +49,7 @@ describe('wallet retrieveBalance', () => {
     const balanceHandler = (ret) => {
       expect(ret.balance).toBe(9000);
       done();
-    }
+    };
     wallets.retrieveBalance({ params: {
       address: walletOwnerKeypair.publicKey(),
       tokenTypeUuid: tokenType.uuid
@@ -60,7 +60,7 @@ describe('wallet retrieveBalance', () => {
     const balanceHandler = (ret) => {
       expect(ret.balance).toBe(1000);
       done();
-    }
+    };
     wallets.retrieveBalance({ params: {
       address: receiverKeypair2.publicKey(),
       tokenTypeUuid: tokenType.uuid

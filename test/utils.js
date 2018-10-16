@@ -4,8 +4,7 @@ const transactions = require('../server/controllers').transactions;
 const createOriginTransaction = async (senderKeypair, tokenId, amount, callback) => {
   const senderPrivate = senderKeypair._secretKey;
   const messageObj = { amount };
-  const signed = signObject(messageObj, senderPrivate);
-  messageObj.signed = signed;
+  messageObj.signed = signObject(messageObj, senderPrivate);
   await transactions.create({
     body: messageObj,
     params: { address: senderKeypair.publicKey(), tokenTypeUuid: tokenId }
@@ -22,8 +21,7 @@ const shareTransaction = async (senderKeypair, transactionUuid, callback) => {
     fromAddress: senderKeypair.publicKey(),
     toAddress: receiverKeypair.publicKey()
   };
-  const signed = signObject(messageObj, senderPrivate);
-  messageObj.signed = signed;
+  messageObj.signed = signObject(messageObj, senderPrivate);
   await transactions.share({
     body: messageObj,
     params: { transactionUuid }
@@ -41,8 +39,7 @@ const shareTransactionWithKeypair = async (senderKeypair, receiverKeypair, trans
     fromAddress: senderKeypair.publicKey(),
     toAddress: receiverKeypair.publicKey()
   };
-  const signed = signObject(messageObj, senderPrivate);
-  messageObj.signed = signed;
+  messageObj.signed = signObject(messageObj, senderPrivate);
   await transactions.share({
     body: messageObj,
     params: { transactionUuid }

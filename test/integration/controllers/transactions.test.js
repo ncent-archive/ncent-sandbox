@@ -23,7 +23,7 @@ describe('Provenance and Redemption', () => {
     await Wallet.create({ address: walletOwnerKeypair.publicKey() });
     const tHandler = originTransaction => {
       shareTransaction(walletOwnerKeypair, originTransaction.uuid, handleShare1);
-    }
+    };
     createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
     const handleShare1 = sharedTransaction => {
       receiverKeypair1 = sharedTransaction.receiverKeypair;
@@ -61,7 +61,7 @@ describe('Provenance and Redemption', () => {
           params: { transactionUuid: endTransaction.uuid }
         }, new psuedoRes(handleProvenanceChain)
       );
-    }
+    };
     const tHandler = originTransaction => {
       shareTransactionWithKeypair(
         walletOwnerKeypair, receiverKeypair2, originTransaction.uuid, handleShare
@@ -75,21 +75,19 @@ describe('Provenance and Redemption', () => {
     const messageObject = {
       transactionUuid: endTransaction.uuid
     };
-    const signed = signObject(messageObject, walletOwnerKeypair._secretKey);
-    messageObject.signed = signed;
+    messageObject.signed = signObject(messageObject, walletOwnerKeypair._secretKey);
 
     const tHandler = originTransaction => {
       shareTransactionWithKeypair(
         walletOwnerKeypair, receiverKeypair2, originTransaction.uuid, handleShare
       );
     };
-    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
     const handleShare = (latestSharedTransaction) => {
       transactions.provenanceChainFIFO({
           params: { address: receiverKeypair2.publicKey(), tokenTypeUuid: tokenType.uuid }
         }, new psuedoRes(handleProvenanceChain)
       );
-    }
+    };
     const handleProvenanceChain = (provenanceChain) => {
       firstProvenanceChain = provenanceChain;
       transactions.redeem({
@@ -109,6 +107,7 @@ describe('Provenance and Redemption', () => {
       expect(firstTransactionInChain1.uuid).not.toBe(firstTransactionInChain2.uuid);
       done();
     };
+    createOriginTransaction(walletOwnerKeypair, tokenType.uuid, AMOUNT, tHandler);
   });
 
 });
