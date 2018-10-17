@@ -14,13 +14,29 @@ module.exports = (sequelize, DataTypes) => {
     expiration: {
       type: DataTypes.DATE,
       allowNull: false
+    },
+    rewardAmount: {
+      allowNull: false,
+      type: DataTypes.INTEGER
+    },
+    sponsorWalletAddress: {
+      allowNull: false,
+      type: DataTypes.STRING
+    },
+    isRedeemed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {});
   Challenge.associate = function(models) {
-    Challenge.belongsTo(models.Wallet, {
-      foreignKey: 'sponsorWalletUuid',
-      onDelete: 'CASCADE'
-    });
+      Challenge.belongsTo(models.TokenType, {
+        foreignKey: 'tokenTypeUuid',
+        onDelete: 'CASCADE'
+      });
+      Challenge.hasMany(models.Transaction, {
+        foreignKey: 'challengeUuid',
+        as: 'transactions'
+      });
   };
   return Challenge;
 };

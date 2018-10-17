@@ -5,14 +5,14 @@ module.exports = {
 	.then(() => {
     return queryInterface.createTable('Transactions', {
 			uuid:{
-					type: DataTypes.UUID,
-					primaryKey: true,
-					allowNull: false,
-					autoIncrement: false,
+				type: DataTypes.UUID,
+				primaryKey: true,
+				allowNull: false,
+				autoIncrement: false,
 			},
 			amount: {
-					type: DataTypes.INTEGER,
-					allowNull: false,
+				type: DataTypes.INTEGER,
+				allowNull: false,
 			},
 			parentTransaction: {
 				type: DataTypes.UUID,
@@ -34,17 +34,17 @@ module.exports = {
 				allowNull: false,
 				type: DataTypes.DATE,
 			},
-			tokenTypeUuid: {
-	 		 	type: DataTypes.UUID,
-				allowNull: false,
-				foreignKey: true,
-				onDelete: 'CASCADE',
-				references: {
-					model: 'TokenTypes',
-					key: 'uuid',
-					as: 'tokenTypeUuid',	
-				},	
-			},
+			challengeUuid: {
+                type: DataTypes.UUID,
+                allowNull: false,
+                foreignKey: true,
+                onDelete: 'CASCADE',
+                references: {
+                    model: 'Challenges',
+                    key: 'uuid',
+                    as: 'challengeUuid',
+                }
+            }
 		});
 	});
   },
