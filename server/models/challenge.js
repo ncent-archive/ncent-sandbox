@@ -38,5 +38,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'transactions'
       });
   };
-  return Challenge;
+    sequelize.sync();
+    return Challenge;
 };
