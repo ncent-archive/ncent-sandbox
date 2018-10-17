@@ -33,5 +33,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'challenges'
     });
   };
-  return TokenType;
+    sequelize.sync();
+    return TokenType;
 };
