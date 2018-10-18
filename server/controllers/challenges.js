@@ -56,6 +56,30 @@ const challengesController = {
             tokenTypeUuid
         });
         res.status(200).send(_.merge({}, challenge, transaction));
+    },
+    async retrieveSponsoredChallenges({params}, res) {
+        const sponsorWalletAddress = params.sponsorWalletAddress;
+        const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
+        if (!wallet) {
+            return res.status(404).send({ message: "Wallet not found" });
+        }
+        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress}});
+        res.status(200).send({sponsoredChallenges});
+    },
+    async retrieveHeldChallenges({params}, res) {
+        const heldChallenges = [];
+        const holderWalletAddress = params.holderWalletAddress;
+        const wallet = await Wallet.findOne({ where: { address: holderWalletAddress } });
+        if (!wallet) {
+            return res.status(404).send({ message: "Wallet not found" });
+        }
+        const allChallenges = await Challenge.findAll({});
+        allChallenges.forEach(challenge => {
+            if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
+                heldChallenges.push(challenge.transactions[challenge.transactions.length - 1]);
+            }
+        });
+        res.status(200).send(heldChallenges);
     }
 };
 
