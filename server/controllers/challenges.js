@@ -79,7 +79,7 @@ const challengesController = {
                 heldChallenges.push(challenge.transactions[challenge.transactions.length - 1]);
             }
         });
-        res.status(200).send(heldChallenges);
+        res.status(200).send({heldChallenges});
     }
 };
 
