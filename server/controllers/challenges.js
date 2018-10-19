@@ -76,8 +76,8 @@ const challengesController = {
         }
         const allChallenges = await Challenge.findAll({include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
-            if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
-                heldChallenges.push(challenge.transactions[challenge.transactions.length - 1]);
+            if (challenge.transactions.length > 1 && challenge.transactions[0].toAddress === holderWalletAddress) {
+                heldChallenges.push(challenge);
             }
         });
         res.status(200).send({heldChallenges});
