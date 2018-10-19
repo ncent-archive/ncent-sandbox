@@ -1,5 +1,6 @@
 const { Challenge, Transaction, Wallet, TokenType } = require('../models');
 const StellarSdk = require("stellar-sdk");
+const nacl = require("tweetnacl");
 const dec = require("../utils/dec");
 const _ = require('lodash');
 
