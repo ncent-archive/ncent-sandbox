@@ -25,4 +25,6 @@ module.exports = (app) => {
 
   app.get('/api/challenges/', challengesController.list);
   app.post('/api/challenges/:address', challengesController.create);
+  app.get('/api/challenges/sponsoredChallenges/:sponsorWalletAddress', challengesController.retrieveSponsoredChallenges);
+  app.get('/api/challenges/heldChallenges/:holderWalletAddress', challengesController.retrieveHeldChallenges);
 };

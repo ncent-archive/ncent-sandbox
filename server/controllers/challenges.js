@@ -1,5 +1,6 @@
 const { Challenge, Transaction, Wallet, TokenType } = require('../models');
 const StellarSdk = require("stellar-sdk");
+const nacl = require("tweetnacl");
 const dec = require("../utils/dec");
 const _ = require('lodash');
 
@@ -44,8 +45,8 @@ const challengesController = {
             sponsorWalletAddress
         });
 
-        const reconstructedObject = { amount: rewardAmount };
-        if (!isVerified(address, signed, reconstructedObject)) {
+        const reconstructedObject = { rewardAmount, name, expiration, tokenTypeUuid };
+        if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }
 
@@ -53,9 +54,33 @@ const challengesController = {
             amount: rewardAmount,
             fromAddress: sponsorWalletAddress,
             toAddress: sponsorWalletAddress,
-            tokenTypeUuid
+            challengeUuid: challenge.uuid
         });
-        res.status(200).send(_.merge({}, challenge, transaction));
+        res.status(200).send({challenge, transaction});
+    },
+    async retrieveSponsoredChallenges({params}, res) {
+        const sponsorWalletAddress = params.sponsorWalletAddress;
+        const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
+        if (!wallet) {
+            return res.status(200).send({ sponsoredChallenges: [] });
+        }
+        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress}});
+        res.status(200).send({sponsoredChallenges});
+    },
+    async retrieveHeldChallenges({params}, res) {
+        const heldChallenges = [];
+        const holderWalletAddress = params.holderWalletAddress;
+        const wallet = await Wallet.findOne({ where: { address: holderWalletAddress } });
+        if (!wallet) {
+            return res.status(200).send({ heldChallenges: [] });
+        }
+        const allChallenges = await Challenge.findAll({include: [{model: Transaction, as: 'transactions'}]});
+        allChallenges.forEach(challenge => {
+            if (challenge.transactions.length > 1 && challenge.transactions[0].toAddress === holderWalletAddress) {
+                heldChallenges.push(challenge);
+            }
+        });
+        res.status(200).send({heldChallenges});
     }
 };
 

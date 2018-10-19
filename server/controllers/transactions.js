@@ -98,7 +98,7 @@ const transactionsController = {
   async share({ body, params }, res) {
     const { challengeUuid } = params;
     const { fromAddress, toAddress, signed } = body;
-    const challenge = await Challenge.findById(challengeUuid);
+    const challenge = await Challenge.findOne({where: {uuid: challengeUuid}, include: [{model: Transaction, as: 'transactions'}]});
     const lastTransaction = challenge.transactions[challenge.transactions.length - 1];
     if (!challenge) {
       return res.status(404).send({ message: "Challenge not found" });
