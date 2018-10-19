@@ -45,7 +45,7 @@ const challengesController = {
             sponsorWalletAddress
         });
 
-        const reconstructedObject = { amount: rewardAmount };
+        const reconstructedObject = { rewardAmount, name, expiration, tokenTypeUuid };
         if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }
@@ -54,9 +54,9 @@ const challengesController = {
             amount: rewardAmount,
             fromAddress: sponsorWalletAddress,
             toAddress: sponsorWalletAddress,
-            tokenTypeUuid
+            challengeUuid: challenge.uuid
         });
-        res.status(200).send(_.merge({}, challenge, transaction));
+        res.status(200).send({challenge, transaction});
     },
     async retrieveSponsoredChallenges({params}, res) {
         const sponsorWalletAddress = params.sponsorWalletAddress;
@@ -74,7 +74,7 @@ const challengesController = {
         if (!wallet) {
             return res.status(404).send({ message: "Wallet not found" });
         }
-        const allChallenges = await Challenge.findAll({});
+        const allChallenges = await Challenge.findAll({include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
             if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
                 heldChallenges.push(challenge.transactions[challenge.transactions.length - 1]);
