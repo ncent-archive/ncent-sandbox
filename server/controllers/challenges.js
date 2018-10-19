@@ -62,7 +62,7 @@ const challengesController = {
         const sponsorWalletAddress = params.sponsorWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
-            return res.status(404).send({ message: "Wallet not found" });
+            return res.status(200).send({ sponsoredChallenges: [] });
         }
         const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress}});
         res.status(200).send({sponsoredChallenges});
@@ -72,7 +72,7 @@ const challengesController = {
         const holderWalletAddress = params.holderWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: holderWalletAddress } });
         if (!wallet) {
-            return res.status(404).send({ message: "Wallet not found" });
+            return res.status(200).send({ heldChallenges: [] });
         }
         const allChallenges = await Challenge.findAll({include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
