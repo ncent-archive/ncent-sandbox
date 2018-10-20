@@ -42,7 +42,8 @@ const challengesController = {
             expiration,
             tokenTypeUuid,
             rewardAmount,
-            sponsorWalletAddress
+            sponsorWalletAddress,
+            isRedeemed: false
         });
 
         const reconstructedObject = { rewardAmount, name, expiration, tokenTypeUuid };
@@ -64,7 +65,7 @@ const challengesController = {
         if (!wallet) {
             return res.status(200).send({ sponsoredChallenges: [] });
         }
-        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress}});
+        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isRedeemed: false}});
         res.status(200).send({sponsoredChallenges});
     },
     async retrieveHeldChallenges({params}, res) {
@@ -74,9 +75,9 @@ const challengesController = {
         if (!wallet) {
             return res.status(200).send({ heldChallenges: [] });
         }
-        const allChallenges = await Challenge.findAll({include: [{model: Transaction, as: 'transactions'}]});
+        const allChallenges = await Challenge.findAll({where: {isRedeemed: false}, include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
-            if (challenge.transactions.length > 1 && challenge.transactions[0].toAddress === holderWalletAddress) {
+            if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
                 heldChallenges.push(challenge);
             }
         });

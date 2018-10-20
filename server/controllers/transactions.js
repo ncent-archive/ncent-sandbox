@@ -173,34 +173,37 @@ const transactionsController = {
   // POST (body: { transactionUuid, signed })
   // -> transaction w/ tokenGraveyard
   async redeem({body}, res) {
-    const { transactionUuid, signed } = body;
-    const transaction = await Transaction.findById(transactionUuid);
-    const challenge = await Transaction.findById(transaction.challengeUuid);
-    if (!transaction) {
-      return res.status(404).send({ message: "Transaction not found" });
-    }
+    const { challengeUuid, signed } = body;
+    const challenge = await Challenge.findOne({where: {uuid: challengeUuid}, include: [{model: Transaction, as: 'transactions'}]});
     if (!challenge) {
       return res.status(404).send({ message: "Challenge not found" });
     }
-    const {toAddress, amount} = transaction;
     const tokenType = await TokenType.findById(challenge.tokenTypeUuid);
-    const reconstructedObject = { transactionUuid };
+    const reconstructedObject = { challengeUuid };
     if (!isVerified(tokenType.sponsorUuid, signed, reconstructedObject)) {
       return res.status(403).send({
         message: "Only the TokenType sponsor can trigger redemption"
       });
     }
+    const toAddress = challenge.transactions[challenge.transactions.length - 1].toAddress;
     let redeemWallet = await Wallet.findOne({ where: { address: toAddress } });
     const newTransaction = await Transaction.create({
       fromAddress: toAddress,
       toAddress: TOKEN_GRAVEYARD_ADDRESS,
-      amount,
-      tokenTypeUuid: challenge.tokenTypeUuid,
-      parentTransaction: transactionUuid
+      amount: challenge.rewardAmount,
+      challengeUuid: challenge.uuid,
+      parentTransaction: challenge.transactions[challenge.transactions.length - 1].uuid
     });
-    const redeemedChallenge = await Challenge.update({isRedeemed: true});
-    const data = { redeemWallet, transaction: newTransaction, challenge: redeemedChallenge };
-    res.status(200).send(data);
+    const redeemedChallenge = await challenge.update({isRedeemed: true});
+    const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress: challenge.sponsorWalletAddress, isRedeemed: false}});
+    const heldChallenges = [];
+    const allChallenges = await Challenge.findAll({where: {isRedeemed: false}, include: [{model: Transaction, as: 'transactions'}]});
+    allChallenges.forEach(challenge => {
+        if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === challenge.sponsorWalletAddress) {
+            heldChallenges.push(challenge);
+        }
+    });
+    res.status(200).send({sponsoredChallenges, heldChallenges});
   }
 };
 
