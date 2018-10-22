@@ -23,6 +23,10 @@ const challengesController = {
             res.status(200).send(allChallenges);
         } catch(error) { res.status(400).send(error); }
     },
+    async retrieve({params}, res) {
+        const challenge = await Challenge.findOne({where: {uuid: params.challengeUuid}, include: [{model: Transaction, as: 'transactions'}]});
+        res.status(200).send({challenge});
+    },
     async create({body, params}, res) {
         const { name, expiration, tokenTypeUuid, rewardAmount, signed } = body;
         const sponsorWalletAddress = params.address;

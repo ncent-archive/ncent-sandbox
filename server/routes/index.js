@@ -24,6 +24,7 @@ module.exports = (app) => {
   app.get("/api/transactions/:tokenTypeUuid/:address", transactionsController.provenanceChainFIFO);
 
   app.get('/api/challenges/', challengesController.list);
+  app.get('/api/challenges/:challengeUuid', challengesController.retrieve);
   app.post('/api/challenges/:address', challengesController.create);
   app.get('/api/challenges/sponsoredChallenges/:sponsorWalletAddress', challengesController.retrieveSponsoredChallenges);
   app.get('/api/challenges/heldChallenges/:holderWalletAddress', challengesController.retrieveHeldChallenges);
