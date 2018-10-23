@@ -203,7 +203,7 @@ const transactionsController = {
             heldChallenges.push(challenge);
         }
     });
-    res.status(200).send({sponsoredChallenges, heldChallenges});
+    res.status(200).send({sponsoredChallenges, heldChallenges, redeemTransaction: newTransaction});
   }
 };
 
