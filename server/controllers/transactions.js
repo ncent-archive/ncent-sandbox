@@ -103,10 +103,10 @@ const transactionsController = {
     if (!challenge) {
       return res.status(404).send({ message: "Challenge not found" });
     }
-    if (fromAddress !== lastTransaction.toAddress) {
+    if (fromAddress !== lastTransaction.toAddress && fromAddress !== challenge.sponsorWalletAddress) {
       return res.status(403).send({ message: "Unauthorized transfer" });
     }
-    if (lastTransaction.fromAddress !== lastTransaction.toAddress) {
+    if (fromAddress !== challenge.sponsorWalletAddress) {
         const childrenTransactions = await getChildrenTransactions(lastTransaction.uuid);
         if (childrenTransactions.length > 0) {
             return res.status(403).send({ message: "Transaction was transferred already" });
