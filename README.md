@@ -6,7 +6,7 @@
 - [Endpoint Documentation](#endpoints-documentation)
 
 ## Introduction
-The nCent Sandbox is a test environment for developers to emulate the upcoming nCent Core Protocol for the purposes of application development. In its current stage, it is designed with a Node.js backend with an Express server and a PostgreSQL database. While this architecture is clearly centralized by nature, it is merely a placeholder to allow developers to interact with our API and SDK, which will be directly transferrable to our Core Protocol as it becomes available.
+The nCent Sandbox is a test environment for developers to emulate the upcoming nCent Core Protocol for the purposes of application development. In its current stage, it is designed with a Node.js backend with an Express server and a PostgreSQL database. While this architecture is clearly centralized by nature, it is merely a placeholder to allow developers to interact with our API and SDK, which will be directly transferable to our Core Protocol as it becomes available.
 
 ## Models
 The following section is a quick reference of the Node.js models that comprise the nCent Sandbox
