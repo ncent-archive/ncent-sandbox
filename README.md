@@ -132,7 +132,6 @@ The Sandbox API routes are detailed [here](/server/routes/index/js).
 - [Retrieve Sponsored Challenges](#retrieve-sponsored-challenges)
 - [Retrieve Held Challenges](#retrieve-held-challenges)
 - [Get All Transactions](#get-all-transactions)
-- [Create Transaction](#create-a-transaction)
 - [Share Challenge](#share-a-challenge)
 - [Redeem a Challenge](#redeem-a-challenge)
 - [Retrieve Provenance Chain of a Transaction](#retrieve-provenance-chain-of-a-transaction)
@@ -238,6 +237,94 @@ None
 
 - - - -
 
+## Get All Challenges
+#### `GET api/challenges`
+#### Description:
+Retrieves a list of all challenges that have been created and their corresponding attributes
+#### Parameters:
+None
+#### Body:
+None
+
+- - - -
+<br />
+
+- - - -
+
+## Get Challenge
+#### `GET api/challenges/{challengeUuid}`
+#### Description:
+Lists information about a specific challenge
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+challengeUuid | String | Unique identifier for a specific challenge
+#### Body:
+None
+
+- - - -
+<br />
+
+- - - -
+
+## Create a Challenge
+#### `POST /api/challenges/{address}`
+#### Description:
+Creates a challenge from a sponsor's wallet address.
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+address | String | Valid sponsor wallet address
+#### Body:
+Name  | Type | Description
+--- | --- | ---
+name | String | the name of the challenge
+expiration | Date | the expiration date of the challenge
+tokenTypeUuid | UUID | the primary key of the token type that will be included in the challenge
+rewardAmount | Int | Amount of tokens to be distributed in the rewards for the challenge
+signed | String | JSON string of signed message object
+
+- - - -
+<br />
+
+- - - -
+
+## Retrieve Sponsored Challenges
+#### `GET /api/challenges/sponsoredChallenges/{sponsorWalletAddress}`
+#### Description:
+Retrieves all challenges sponsored by a specific wallet address.
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+sponsorWalletAddress | String | Valid Wallet address
+#### Body:
+Name  | Type | Description
+--- | --- | ---
+None
+
+- - - -
+<br />
+
+- - - -
+
+## Retrieve Held Challenges
+#### `GET /api/challenges/heldChallenges/{holderWalletAddress}`
+#### Description:
+Retrieves all challenges currently possessed (but not sponsored) by a specific wallet address.
+#### Parameters:
+Name  | Type | Description
+--- | --- | ---
+holderWalletAddress | String | Valid Wallet address
+#### Body:
+Name  | Type | Description
+--- | --- | ---
+None
+
+- - - -
+<br />
+
+- - - -
+
 ## Get All Transactions
 #### `GET api/transactions/`
 #### Description:
@@ -251,34 +338,14 @@ none
 
 - - - -
 
-## Create a Challenge (Transaction)
-#### `POST /api/transactions/{tokenTypeUuid}/{address}`
-#### Description:
-Creates a challenge from the wallet of a TokenType creator to be shared with another wallet.
-#### Parameters:
-Name  | Type | Description
---- | --- | ---
-tokenTypeUuid | String | Unique identifier for a specific token type
-address | String | Valid Wallet address
-#### Body:
-Name  | Type | Description
---- | --- | ---
-amount | Int | Amount of TokenType to transfer
-signed | String | JSON string of signed message object
-
-- - - -
-<br />
-
-- - - -
-
-## Share a Challenge (Transaction)
-#### `POST /api/transactions/{transactionUuid}`
+## Share a Challenge
+#### `POST /api/transactions/{challengeUuid}`
 #### Description:
 Shares a challenge via a transaction from one wallet to another
 #### Parameters:
 Name  | Type | Description
 --- | --- | ---
-transactionUuid | String | Unique identifier for a specific token type
+challengeUuid | String | Unique identifier for a specific challenge to be transferred
 #### Body:
 Name  | Type | Description
 --- | --- | ---
@@ -291,7 +358,7 @@ signed | String | JSON string of signed message object
 
 - - - -
 
-## Redeem a Challenge (Transaction)
+## Redeem a Challenge
 #### `POST /api/transactions/redeem`
 #### Description:
 Redeems a challenge from a wallet
@@ -300,8 +367,8 @@ none
 #### Body:
 Name  | Type | Description
 --- | --- | ---
-transactionUuid | Int | Unique identifier for a transaction
-signed | String | JSON string of signed message object (signed by the TokenType creator)
+challengeUuid | Int | Unique identifier for the challenge that is to be redeemed
+signed | String | JSON string of signed message object (signed by the Challenge sponsor)
 - - - -
 <br />
 
