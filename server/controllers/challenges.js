@@ -52,7 +52,7 @@ const challengesController = {
             isRedeemed: false
         });
 
-        const reconstructedObject = { rewardAmount, name, expiration, tokenTypeUuid };
+        const reconstructedObject = { rewardAmount, name, description, imageUrl, expiration, tokenTypeUuid };
         if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }
