@@ -28,7 +28,7 @@ const challengesController = {
         res.status(200).send({challenge});
     },
     async create({body, params}, res) {
-        const { name, expiration, tokenTypeUuid, rewardAmount, signed } = body;
+        const { name, description, imageUrl, expiration, tokenTypeUuid, rewardAmount, signed } = body;
         const sponsorWalletAddress = params.address;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
@@ -43,6 +43,8 @@ const challengesController = {
         }
         const challenge = await Challenge.create({
             name,
+            description,
+            imageUrl,
             expiration,
             tokenTypeUuid,
             rewardAmount,
@@ -50,7 +52,7 @@ const challengesController = {
             isRedeemed: false
         });
 
-        const reconstructedObject = { rewardAmount, name, expiration, tokenTypeUuid };
+        const reconstructedObject = { rewardAmount, name, description, imageUrl, expiration, tokenTypeUuid };
         if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }

@@ -13,6 +13,12 @@ module.exports = {
           allowNull: false,
           type: DataTypes.STRING
         },
+        description: {
+          type: DataTypes.STRING
+        },
+        imageUrl: {
+          type: DataTypes.STRING
+        },
         expiration: {
           allowNull: false,
           type: DataTypes.DATE
