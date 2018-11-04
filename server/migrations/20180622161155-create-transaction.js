@@ -10,7 +10,7 @@ module.exports = {
 				allowNull: false,
 				autoIncrement: false,
 			},
-			amount: {
+			numShares: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
 			},
