@@ -41,6 +41,10 @@ module.exports = {
                             min: 1
                         }
                     },
+                    rewardType: {
+                        type: DataTypes.STRING,
+                        defaultValue: "NCNT"
+                    },
                     sponsorWalletAddress: {
                         allowNull: false,
                         type: DataTypes.STRING
@@ -51,24 +55,12 @@ module.exports = {
                             min: 1
                         }
                     },
-                    remainingShares: {
-                        type: DataTypes.INTEGER,
-                        validate: {
-                            min: 0
-                        }
-                    },
                     maxRedemptions: {
                         type: DataTypes.INTEGER,
                         validate: {
                             min: 1
                         },
                         defaultValue: 1
-                    },
-                    remainingRedemptions: {
-                        type: DataTypes.INTEGER,
-                        validate: {
-                            min: 0
-                        }
                     },
                     isComplete: {
                         type: DataTypes.BOOLEAN
