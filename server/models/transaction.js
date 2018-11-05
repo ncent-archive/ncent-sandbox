@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: true
     },
-    amount: {
+    numShares: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
