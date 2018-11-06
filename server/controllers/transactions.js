@@ -44,12 +44,6 @@ const getProvenanceChain = async (transaction) => {
     return transactionChain;
 };
 
-const getChildrenTransactions = async (parentTransaction) => {
-    return await Transaction.findAll({
-        where: {parentTransaction}
-    });
-};
-
 // Receives: publicKey as string, signed transaction, unsigned transaction
 // Returns: Boolean: Was this signed by publicKey's secret key
 const isVerified = (publicKeyStr, signed, reconstructedObject) => {
@@ -144,7 +138,7 @@ const transactionsController = {
         if (numShares > (receivedShares - givenShares)) {
             return res.status(403).send({message: "not enough shares to send"});
         }
-        
+
         const reconstructedObject = {fromAddress, toAddress};
         if (!isVerified(fromAddress, signed, reconstructedObject)) {
             return res.status(403).send({message: "Invalid transaction signing"});
@@ -152,7 +146,7 @@ const transactionsController = {
         const newTransaction = await Transaction.create({
             toAddress,
             fromAddress,
-            numShares: numShares,
+            numShares,
             parentTransaction: oldestOwnedTransaction.uuid,
             challengeUuid
         });
