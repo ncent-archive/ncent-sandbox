@@ -193,7 +193,7 @@ const transactionsController = {
     // POST (body: { transactionUuid, signed })
     // -> transaction w/ tokenGraveyard
     async redeem({body}, res) {
-        const {challengeUuid, signed} = body;
+        const {challengeUuid, redeemerAddress, signed} = body;
         const challenge = await Challenge.findOne({
             where: {uuid: challengeUuid},
             include: [{model: Transaction, as: 'transactions'}]
@@ -201,32 +201,70 @@ const transactionsController = {
         if (!challenge) {
             return res.status(404).send({message: "Challenge not found"});
         }
+
+        const redeemerWallet = await Wallet.findOne({where: {address: toAddress}});
+        if (!redeemerWallet) {
+            return res.status(404).send({message: "redeemer wallet not found"});
+        }
+
+        if (challenge.isComplete) {
+            return res.status(403).send({message: "Challenge has already been completed"});
+        }
+
         const tokenType = await TokenType.findById(challenge.tokenTypeUuid);
-        const reconstructedObject = {challengeUuid};
+        const reconstructedObject = {challengeUuid, redeemerAddress};
         if (!isVerified(tokenType.sponsorUuid, signed, reconstructedObject)) {
             return res.status(403).send({
                 message: "Only the TokenType sponsor can trigger redemption"
             });
         }
-        const toAddress = challenge.transactions[challenge.transactions.length - 1].toAddress;
-        let redeemWallet = await Wallet.findOne({where: {address: toAddress}});
-        const newTransaction = await Transaction.create({
-            fromAddress: toAddress,
-            toAddress: TOKEN_GRAVEYARD_ADDRESS,
-            numShares: challenge.rewardAmount,
-            challengeUuid: challenge.uuid,
-            parentTransaction: challenge.transactions[challenge.transactions.length - 1].uuid
+
+        const givenTransactions = await getGivenTransactions(redeemerAddress, challenge.tokenTypeUuid);
+        const receivedTransactions = await getReceivedTransactions(redeemerAddress, challenge.tokenTypeUuid);
+        const oldestTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
+
+        let givenShares = [];
+        let receivedShares = [];
+
+        givenTransactions.forEach(transaction => {
+            givenShares += transaction.numShares;
         });
-        const redeemedChallenge = await challenge.update({isRedeemed: true});
+        receivedTransactions.forEach(transaction => {
+            receivedShares += transaction.numShares;
+        });
+
+        if (receivedShares - givenShares <= 0) {
+            return res.status(403).send({message: "not enough shares left for redemption"});
+        }
+
+        const newTransaction = await Transaction.create({
+            fromAddress: redeemerAddress,
+            toAddress: TOKEN_GRAVEYARD_ADDRESS,
+            numShares: 1,
+            challengeUuid: challenge.uuid,
+            parentTransaction: oldestTransaction.uuid
+        });
+
+        const redeemedTransactions = await Transaction.find({
+            where: {
+                challengeUuid,
+                toAddress: TOKEN_GRAVEYARD_ADDRESS
+            }
+        });
+
+        if (redeemedTransactions && redeemedTransactions.length === challenge.maxRedemptions) {
+            await challenge.update({isComplete: true});
+        }
+
         const sponsoredChallenges = await Challenge.findAll({
             where: {
                 sponsorWalletAddress: challenge.sponsorWalletAddress,
-                isRedeemed: false
+                isComplete: false
             }
         });
         const heldChallenges = [];
         const allChallenges = await Challenge.findAll({
-            where: {isRedeemed: false},
+            where: {isComplete: false},
             include: [{model: Transaction, as: 'transactions'}]
         });
         allChallenges.forEach(challenge => {
