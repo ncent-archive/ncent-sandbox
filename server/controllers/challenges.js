@@ -16,6 +16,12 @@ const isVerified = (publicKeyStr, signed, reconstructedObject) => {
     );
 };
 
+const getChildrenTransactions = async (parentTransaction) => {
+    return await Transaction.findAll({
+        where: {parentTransaction}
+    });
+};
+
 const challengesController = {
     async list(_, res) {
         try {
@@ -88,6 +94,29 @@ const challengesController = {
             }
         });
         res.status(200).send({heldChallenges});
+    },
+    async retrieveAllLeafNodeTransactions({params}, res) {
+        let leafNodeTransactions = [];
+        const challengeUuid = params.challengeUuid;
+        const challenge = await Challenge.find({where: {uuid: challengeUuid}, include: [{model: Transaction, as: 'transactions'}]});
+
+        if (!challenge) {
+            return res.status(404).send({message: "Challenge not found"});
+        }
+
+        const allTransactions = challenge.transactions;
+        if (allTransactions && allTransactions.length < 1) {
+            return res.status(200).send({leafNodeTransactions});
+        }
+
+        allTransactions.forEach(async transaction => {
+            const childrenTransactions = await getChildrenTransactions(transaction.uuid);
+            if (childrenTransactions && childrenTransactions.length) {
+                leafNodeTransactions.push(transaction);
+            }
+        });
+
+        return res.status(200).send({leafNodeTransactions});
     }
 };
 
