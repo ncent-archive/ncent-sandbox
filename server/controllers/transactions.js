@@ -139,7 +139,7 @@ const transactionsController = {
             return res.status(403).send({message: "not enough shares to send"});
         }
 
-        const reconstructedObject = {fromAddress, toAddress};
+        const reconstructedObject = {fromAddress, toAddress, numShares};
         if (!isVerified(fromAddress, signed, reconstructedObject)) {
             return res.status(403).send({message: "Invalid transaction signing"});
         }
@@ -150,7 +150,7 @@ const transactionsController = {
             parentTransaction: oldestOwnedTransaction.uuid,
             challengeUuid
         });
-        const data = {fromWallet, toWallet, transaction: newTransaction};
+        const data = {transaction: newTransaction};
         res.status(200).send(data);
     },
     // GET (params: {transactionUuid})
