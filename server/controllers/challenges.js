@@ -34,7 +34,7 @@ const challengesController = {
         res.status(200).send({challenge});
     },
     async create({body, params}, res) {
-        const { name, description, imageUrl, expiration, tokenTypeUuid, rewardAmount, signed } = body;
+        const { name, description, imageUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
         const sponsorWalletAddress = params.address;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
@@ -54,11 +54,14 @@ const challengesController = {
             expiration,
             tokenTypeUuid,
             rewardAmount,
+            rewardType,
+            maxShares,
+            maxRedemptions,
             sponsorWalletAddress,
-            isRedeemed: false
+            isComplete: false
         });
 
-        const reconstructedObject = { rewardAmount, name, description, imageUrl, expiration, tokenTypeUuid };
+        const reconstructedObject = { rewardAmount, name, description, imageUrl, expiration, tokenTypeUuid, rewardType, maxShares, maxRedemptions };
         if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }
@@ -77,7 +80,7 @@ const challengesController = {
         if (!wallet) {
             return res.status(200).send({ sponsoredChallenges: [] });
         }
-        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isRedeemed: false}});
+        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isComplete: false}});
         res.status(200).send({sponsoredChallenges});
     },
     async retrieveHeldChallenges({params}, res) {
@@ -87,7 +90,7 @@ const challengesController = {
         if (!wallet) {
             return res.status(200).send({ heldChallenges: [] });
         }
-        const allChallenges = await Challenge.findAll({where: {isRedeemed: false}, include: [{model: Transaction, as: 'transactions'}]});
+        const allChallenges = await Challenge.findAll({where: {isComplete: false}, include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
             if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
                 heldChallenges.push(challenge);
