@@ -38,14 +38,11 @@ const challengesController = {
         const sponsorWalletAddress = params.address;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
-            return res.status(404).send({ message: "Wallet not found" });
+            const wallet = await Wallet.create({ address: sponsorWalletAddress })
         }
         const tokenType = await TokenType.findById(tokenTypeUuid);
         if (!tokenType) {
             return res.status(404).send({ message: "TokenType not found" });
-        }
-        if (tokenType.sponsorUuid !== sponsorWalletAddress) {
-            return res.status(404).send({message:"Wallet !== TokenType sponsor"});
         }
         const challenge = await Challenge.create({
             name,
@@ -70,6 +67,7 @@ const challengesController = {
             amount: rewardAmount,
             fromAddress: sponsorWalletAddress,
             toAddress: sponsorWalletAddress,
+            numShares: rewardAmount,
             challengeUuid: challenge.uuid
         });
         res.status(200).send({challenge, transaction});

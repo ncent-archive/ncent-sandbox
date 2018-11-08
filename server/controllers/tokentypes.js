@@ -31,13 +31,8 @@ const tokenTypeController = {
   // -> [{tokenType, [transaction...transaction]}...]
   async listAll(_, res) {
     try {
-      const tokenTypesWithTransactions = await TokenType.findAll({
-          include: [{
-            model: Transaction,
-            as: 'transactions',
-          }],
-      });
-      res.status(200).send(tokenTypesWithTransactions);
+      const tokenTypes = await TokenType.findAll();
+      res.status(200).send(tokenTypes);
     } catch (e) {
       res.status(400).send(e);
     }
