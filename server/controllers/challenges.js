@@ -110,14 +110,17 @@ const challengesController = {
             return res.status(200).send({leafNodeTransactions});
         }
 
-        allTransactions.forEach(async transaction => {
+        allTransactions.forEach(async (transaction, index) => {
             const childrenTransactions = await getChildrenTransactions(transaction.uuid);
-            if (childrenTransactions && childrenTransactions.length) {
+
+            if (childrenTransactions && childrenTransactions.length < 1) {
                 leafNodeTransactions.push(transaction);
             }
-        });
 
-        return res.status(200).send({leafNodeTransactions});
+            if (index === allTransactions.length - 1) {
+                return res.status(200).send({leafNodeTransactions});
+            }
+        });
     }
 };
 

@@ -4,15 +4,15 @@ const StellarSdk = require("stellar-sdk");
 const dec = require("../utils/dec");
 const TOKEN_GRAVEYARD_ADDRESS = process.env.TOKEN_GRAVEYARD_ADDRESS;
 
-const getGivenTransactions = async (publicKey, tokenTypeUuid) => {
+const getGivenTransactions = async (publicKey, challengeUuid) => {
     return await Transaction.findAll({
-        where: {fromAddress: publicKey, tokenTypeUuid}
+        where: {fromAddress: publicKey, challengeUuid}
     });
 };
 
-const getReceivedTransactions = async (publicKey, tokenTypeUuid) => {
+const getReceivedTransactions = async (publicKey, challengeUuid) => {
     return await Transaction.findAll({
-        where: {toAddress: publicKey, tokenTypeUuid},
+        where: {toAddress: publicKey, challengeUuid},
         order: [["updatedAt", "DESC"]] // newest to oldest
     });
 };
@@ -109,14 +109,14 @@ const transactionsController = {
             include: [{model: Transaction, as: 'transactions'}]
         });
 
-        const givenTransactions = await getGivenTransactions(address, challenge.tokenTypeUuid);
-        const receivedTransactions = await getReceivedTransactions(address, challenge.tokenTypeUuid);
+        const givenTransactions = await getGivenTransactions(fromAddress, challenge.uuid);
+        const receivedTransactions = await getReceivedTransactions(fromAddress, challenge.uuid);
         const oldestOwnedTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
 
         if (!challenge) {
             return res.status(404).send({message: "Challenge not found"});
         }
-        if (fromAddress !== oldestOwnedTransaction.toAddress && fromAddress !== challenge.sponsorWalletAddress) {
+        if (fromAddress !== challenge.sponsorWalletAddress && (oldestOwnedTransaction && fromAddress !== oldestOwnedTransaction.toAddress)) {
             return res.status(403).send({message: "Unauthorized transfer"});
         }
         let fromWallet = await Wallet.findOne({where: {address: fromAddress}});
@@ -143,11 +143,19 @@ const transactionsController = {
         if (!isVerified(fromAddress, signed, reconstructedObject)) {
             return res.status(403).send({message: "Invalid transaction signing"});
         }
+
+        let parentUuid;
+        if (oldestOwnedTransaction) {
+            parentUuid = oldestOwnedTransaction.uuid;
+        } else if (fromAddress === challenge.sponsorWalletAddress) {
+            const parentTransaction = await Transaction.find({where: {fromAddress: challenge.sponsorWalletAddress, toAddress: challenge.sponsorWalletAddress}});
+            parentUuid = parentTransaction.uuid;
+        }
         const newTransaction = await Transaction.create({
             toAddress,
             fromAddress,
             numShares,
-            parentTransaction: oldestOwnedTransaction.uuid,
+            parentTransaction: parentUuid,
             challengeUuid
         });
         const data = {transaction: newTransaction};
