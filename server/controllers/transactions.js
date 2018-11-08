@@ -179,17 +179,17 @@ const transactionsController = {
     // -> [challengeTransaction, transaction2...transaction]
     // returns provenanceChain of oldest "challenge" that hasn't been shared
     async provenanceChainFIFO({params}, res) {
-        const {address, tokenTypeUuid} = params;
+        const {address, challengeUuid} = params;
         const wallet = await Wallet.findOne({where: {address}});
         if (!wallet) {
             return res.status(404).send({message: "Wallet not found"});
         }
-        const tokenType = await TokenType.findById(tokenTypeUuid);
-        if (!tokenType) {
-            return res.status(404).send({message: "TokenType not found"});
+        const challenge = await Challenge.findById(challengeUuid);
+        if (!challenge) {
+            return res.status(404).send({message: "Challenge not found"});
         }
-        const givenTransactions = await getGivenTransactions(address, tokenTypeUuid);
-        const receivedTransactions = await getReceivedTransactions(address, tokenTypeUuid);
+        const givenTransactions = await getGivenTransactions(address, challengeUuid);
+        const receivedTransactions = await getReceivedTransactions(address, challengeUuid);
         const oldestOwnedTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
 
         if (!oldestOwnedTransaction) {
