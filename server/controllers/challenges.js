@@ -34,11 +34,12 @@ const challengesController = {
         res.status(200).send({challenge});
     },
     async create({body, params}, res) {
+        let wallet;
         const { name, description, imageUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
         const sponsorWalletAddress = params.address;
-        const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
+        wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
-            const wallet = await Wallet.create({ address: sponsorWalletAddress })
+            wallet = await Wallet.create({ address: sponsorWalletAddress })
         }
         const tokenType = await TokenType.findById(tokenTypeUuid);
         if (!tokenType) {
