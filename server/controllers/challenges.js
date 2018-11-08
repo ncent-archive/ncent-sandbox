@@ -34,18 +34,16 @@ const challengesController = {
         res.status(200).send({challenge});
     },
     async create({body, params}, res) {
+        let wallet;
         const { name, description, imageUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
         const sponsorWalletAddress = params.address;
-        const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
+        wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
-            return res.status(404).send({ message: "Wallet not found" });
+            wallet = await Wallet.create({ address: sponsorWalletAddress })
         }
         const tokenType = await TokenType.findById(tokenTypeUuid);
         if (!tokenType) {
             return res.status(404).send({ message: "TokenType not found" });
-        }
-        if (tokenType.sponsorUuid !== sponsorWalletAddress) {
-            return res.status(404).send({message:"Wallet !== TokenType sponsor"});
         }
         const challenge = await Challenge.create({
             name,
@@ -70,6 +68,7 @@ const challengesController = {
             amount: rewardAmount,
             fromAddress: sponsorWalletAddress,
             toAddress: sponsorWalletAddress,
+            numShares: rewardAmount,
             challengeUuid: challenge.uuid
         });
         res.status(200).send({challenge, transaction});
@@ -112,14 +111,17 @@ const challengesController = {
             return res.status(200).send({leafNodeTransactions});
         }
 
-        allTransactions.forEach(async transaction => {
+        allTransactions.forEach(async (transaction, index) => {
             const childrenTransactions = await getChildrenTransactions(transaction.uuid);
-            if (childrenTransactions && childrenTransactions.length) {
+
+            if (childrenTransactions && childrenTransactions.length < 1) {
                 leafNodeTransactions.push(transaction);
             }
-        });
 
-        return res.status(200).send({leafNodeTransactions});
+            if (index === allTransactions.length - 1) {
+                return res.status(200).send({leafNodeTransactions});
+            }
+        });
     }
 };
 
