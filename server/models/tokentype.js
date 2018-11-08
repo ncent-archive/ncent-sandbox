@@ -3,7 +3,8 @@ module.exports = (sequelize, DataTypes) => {
     const TokenType = sequelize.define('TokenType', {
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
+            unique: true
         },
         uuid: {
             type: DataTypes.UUID,
