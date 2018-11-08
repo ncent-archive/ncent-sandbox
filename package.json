@@ -20,7 +20,8 @@
     "sequelize": "^4.37.10",
     "stellar-sdk": "^0.10.2",
     "tweetnacl": "^1.0.0",
-    "tweetnacl-util": "^0.15.0"
+    "tweetnacl-util": "^0.15.0",
+    "uuid": "^3.3.2"
   },
   "jest": {
     "testEnvironment": "node",
