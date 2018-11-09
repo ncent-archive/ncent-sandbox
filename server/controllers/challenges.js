@@ -3,6 +3,7 @@ const StellarSdk = require("stellar-sdk");
 const nacl = require("tweetnacl");
 const dec = require("../utils/dec");
 const _ = require('lodash');
+const TOKEN_GRAVEYARD_ADDRESS = process.env.TOKEN_GRAVEYARD_ADDRESS;
 
 // Receives: publicKey as string, signed transaction, unsigned transaction
 // Returns: Boolean: Was this signed by publicKey's secret key
@@ -65,10 +66,9 @@ const challengesController = {
         }
 
         const transaction = await Transaction.create({
-            amount: rewardAmount,
-            fromAddress: sponsorWalletAddress,
+            fromAddress: TOKEN_GRAVEYARD_ADDRESS,
             toAddress: sponsorWalletAddress,
-            numShares: rewardAmount,
+            numShares: maxShares,
             challengeUuid: challenge.uuid
         });
         res.status(200).send({challenge, transaction});
@@ -112,10 +112,12 @@ const challengesController = {
         }
 
         allTransactions.forEach(async (transaction, index) => {
-            const childrenTransactions = await getChildrenTransactions(transaction.uuid);
+            if (transaction.toAddress !== TOKEN_GRAVEYARD_ADDRESS) {
+                const childrenTransactions = await getChildrenTransactions(transaction.uuid);
 
-            if (childrenTransactions && childrenTransactions.length < 1) {
-                leafNodeTransactions.push(transaction);
+                if (childrenTransactions && childrenTransactions.length < 1) {
+                    leafNodeTransactions.push(transaction);
+                }
             }
 
             if (index === allTransactions.length - 1) {
