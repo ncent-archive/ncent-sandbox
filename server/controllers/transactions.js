@@ -101,8 +101,8 @@ const transactionsController = {
     async share({body, params}, res) {
         const {challengeUuid} = params;
         const {fromAddress, toAddress, numShares, signed} = body;
-        let givenShares;
-        let receivedShares;
+        let givenShares = 0;
+        let receivedShares = 0;
 
         const challenge = await Challenge.findOne({
             where: {uuid: challengeUuid},
@@ -135,6 +135,8 @@ const transactionsController = {
             receivedShares += transaction.numShares;
         });
 
+        console.log(numShares, receivedShares, givenShares);
+
         if (numShares > (receivedShares - givenShares)) {
             return res.status(403).send({message: "not enough shares to send"});
         }
@@ -148,7 +150,7 @@ const transactionsController = {
         if (oldestOwnedTransaction) {
             parentUuid = oldestOwnedTransaction.uuid;
         } else if (fromAddress === challenge.sponsorWalletAddress) {
-            const parentTransaction = await Transaction.find({where: {fromAddress: challenge.sponsorWalletAddress, toAddress: challenge.sponsorWalletAddress}});
+            const parentTransaction = await Transaction.find({where: {fromAddress: TOKEN_GRAVEYARD_ADDRESS, toAddress: challenge.sponsorWalletAddress}});
             parentUuid = parentTransaction.uuid;
         }
         const newTransaction = await Transaction.create({
@@ -184,7 +186,8 @@ const transactionsController = {
         if (!wallet) {
             return res.status(404).send({message: "Wallet not found"});
         }
-        const challenge = await Challenge.findById(challengeUuid);
+        console.log(challengeUuid);
+        const challenge = await Challenge.find({where: {uuid: challengeUuid}});
         if (!challenge) {
             return res.status(404).send({message: "Challenge not found"});
         }
@@ -193,7 +196,7 @@ const transactionsController = {
         const oldestOwnedTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
 
         if (!oldestOwnedTransaction) {
-            return res.status(404).send({message: "No owned challenges"});
+            return res.status(403).send({message: "No owned challenges"});
         }
         const transactionChain = await getProvenanceChain(oldestOwnedTransaction);
         res.status(200).send(transactionChain);
@@ -210,7 +213,7 @@ const transactionsController = {
             return res.status(404).send({message: "Challenge not found"});
         }
 
-        const redeemerWallet = await Wallet.findOne({where: {address: toAddress}});
+        const redeemerWallet = await Wallet.findOne({where: {address: redeemerAddress}});
         if (!redeemerWallet) {
             return res.status(404).send({message: "redeemer wallet not found"});
         }
@@ -219,20 +222,19 @@ const transactionsController = {
             return res.status(403).send({message: "Challenge has already been completed"});
         }
 
-        const tokenType = await TokenType.findById(challenge.tokenTypeUuid);
         const reconstructedObject = {challengeUuid, redeemerAddress};
-        if (!isVerified(tokenType.sponsorUuid, signed, reconstructedObject)) {
+        if (!isVerified(challenge.sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({
-                message: "Only the TokenType sponsor can trigger redemption"
+                message: "Only the Challenge sponsor can trigger redemption"
             });
         }
 
-        const givenTransactions = await getGivenTransactions(redeemerAddress, challenge.tokenTypeUuid);
-        const receivedTransactions = await getReceivedTransactions(redeemerAddress, challenge.tokenTypeUuid);
+        const givenTransactions = await getGivenTransactions(redeemerAddress, challengeUuid);
+        const receivedTransactions = await getReceivedTransactions(redeemerAddress, challengeUuid);
         const oldestTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
 
-        let givenShares = [];
-        let receivedShares = [];
+        let givenShares = 0;
+        let receivedShares = 0;
 
         givenTransactions.forEach(transaction => {
             givenShares += transaction.numShares;
@@ -253,7 +255,7 @@ const transactionsController = {
             parentTransaction: oldestTransaction.uuid
         });
 
-        const redeemedTransactions = await Transaction.find({
+        const redeemedTransactions = await Transaction.findAll({
             where: {
                 challengeUuid,
                 toAddress: TOKEN_GRAVEYARD_ADDRESS
@@ -261,7 +263,7 @@ const transactionsController = {
         });
 
         if (redeemedTransactions && redeemedTransactions.length === challenge.maxRedemptions) {
-            await challenge.update({isComplete: true});
+            await challenge.updateAttributes({isComplete: true});
         }
 
         const sponsoredChallenges = await Challenge.findAll({
