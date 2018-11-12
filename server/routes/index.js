@@ -10,7 +10,7 @@ module.exports = (app) => {
   
   app.get('/api/wallets', walletsController.listAll);
   app.get('/api/wallets/:address', walletsController.retrieve);
-  app.get('/api/wallets/:address/:tokenTypeUuid', walletsController.retrieveBalance);
+  app.get('/api/wallets/:address/:challengeUuid', walletsController.retrieveBalance);
 
   app.post('/api/tokentypes', tokentypesController.create);
   app.get('/api/tokentypes', tokentypesController.listAll);

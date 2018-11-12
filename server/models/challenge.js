@@ -17,6 +17,9 @@ module.exports = (sequelize, DataTypes) => {
         imageUrl: {
             type: DataTypes.STRING
         },
+        participationUrl: {
+            type: DataTypes.STRING
+        },
         expiration: {
             type: DataTypes.DATE,
             allowNull: false
