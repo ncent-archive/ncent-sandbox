@@ -108,7 +108,7 @@ const challengesController = {
                 }
             });
         } else {
-            return res.status(200).send({sponsoredChallenges, sponsoredChallengeBalances});
+            return res.status(200).send({sponsoredChallenges: [], sponsoredChallengeBalances: []});
         }
     },
     async retrieveHeldChallenges({params}, res) {
@@ -128,14 +128,14 @@ const challengesController = {
 
         if (heldChallenges.length > 0) {
             heldChallenges.forEach(async (heldChallenge, index) => {
-                const challengeBalance = await walletBalance(holderWalletAddress, heldChallenge);
+                const challengeBalance = await walletBalance(holderWalletAddress, heldChallenge.uuid);
                 heldChallengeBalances.push(challengeBalance);
                 if (index === heldChallenges.length - 1) {
                     return res.status(200).send({heldChallenges, heldChallengeBalances});
                 }
             });
         } else {
-            return res.status(200).send({heldChallenges, heldChallengeBalances});
+            return res.status(200).send({heldChallenges: [], heldChallengeBalances: []});
         }
     },
     async retrieveAllLeafNodeTransactions({params}, res) {
