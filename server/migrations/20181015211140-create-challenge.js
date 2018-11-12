@@ -19,6 +19,9 @@ module.exports = {
                     imageUrl: {
                         type: DataTypes.STRING
                     },
+                    participationUrl: {
+                        type: DataTypes.STRING
+                    },
                     expiration: {
                         allowNull: false,
                         type: DataTypes.DATE
