@@ -16,6 +16,9 @@ module.exports = {
                     description: {
                         type: DataTypes.STRING
                     },
+                    company: {
+                        type: DataTypes.STRING
+                    },
                     imageUrl: {
                         type: DataTypes.STRING
                     },
