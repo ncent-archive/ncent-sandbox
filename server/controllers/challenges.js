@@ -92,10 +92,11 @@ const challengesController = {
     },
     async retrieveSponsoredChallenges({params}, res) {
         const sponsoredChallengeBalances = [];
+        const sponsoredChallengeRemainingRedemptions = [];
         const sponsorWalletAddress = params.sponsorWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
-            return res.status(200).send({ sponsoredChallenges: [] });
+            return res.status(200).send({sponsoredChallenges: [], sponsoredChallengeBalances: [], sponsoredChallengeRemainingRedemptions: []});
         }
         const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isComplete: false}, include: [{model: Transaction, as: 'transactions'}]});
 
@@ -103,21 +104,29 @@ const challengesController = {
             sponsoredChallenges.forEach(async (sponsoredChallenge, index) => {
                 const challengeBalance = await walletBalance(sponsorWalletAddress, sponsoredChallenge.uuid);
                 sponsoredChallengeBalances.push(challengeBalance);
+                const redeemedTransactions = await Transaction.findAll({
+                    where: {
+                        uuid: sponsoredChallenge.uuid,
+                        toAddress: TOKEN_GRAVEYARD_ADDRESS
+                    }
+                });
+                sponsoredChallengeRemainingRedemptions.push(sponsoredChallenge.maxRedemptions - redeemedTransactions.length);
                 if (index === sponsoredChallenges.length - 1) {
-                    return res.status(200).send({sponsoredChallenges, sponsoredChallengeBalances});
+                    return res.status(200).send({sponsoredChallenges, sponsoredChallengeBalances, sponsoredChallengeRemainingRedemptions});
                 }
             });
         } else {
-            return res.status(200).send({sponsoredChallenges: [], sponsoredChallengeBalances: []});
+            return res.status(200).send({sponsoredChallenges: [], sponsoredChallengeBalances: [], sponsoredChallengeRemainingRedemptions: []});
         }
     },
     async retrieveHeldChallenges({params}, res) {
         const heldChallenges = [];
         const heldChallengeBalances = [];
+        const heldChallengeRemainingRedemptions = [];
         const holderWalletAddress = params.holderWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: holderWalletAddress } });
         if (!wallet) {
-            return res.status(200).send({ heldChallenges: [] });
+            return res.status(200).send({heldChallenges: [], heldChallengeBalances: [], heldChallengeRemainingRedemptions: []});
         }
         const allChallenges = await Challenge.findAll({where: {isComplete: false}, include: [{model: Transaction, as: 'transactions'}]});
         allChallenges.forEach(challenge => {
@@ -130,12 +139,19 @@ const challengesController = {
             heldChallenges.forEach(async (heldChallenge, index) => {
                 const challengeBalance = await walletBalance(holderWalletAddress, heldChallenge.uuid);
                 heldChallengeBalances.push(challengeBalance);
+                const redeemedTransactions = await Transaction.findAll({
+                    where: {
+                        uuid: heldChallenge.uuid,
+                        toAddress: TOKEN_GRAVEYARD_ADDRESS
+                    }
+                });
+                heldChallengeRemainingRedemptions.push(heldChallenge.maxRedemptions - redeemedTransactions.length);
                 if (index === heldChallenges.length - 1) {
-                    return res.status(200).send({heldChallenges, heldChallengeBalances});
+                    return res.status(200).send({heldChallenges, heldChallengeBalances, heldChallengeRemainingRedemptions});
                 }
             });
         } else {
-            return res.status(200).send({heldChallenges: [], heldChallengeBalances: []});
+            return res.status(200).send({heldChallenges: [], heldChallengeBalances: [], heldChallengeRemainingRedemptions: []});
         }
     },
     async retrieveAllLeafNodeTransactions({params}, res) {
