@@ -23,6 +23,23 @@ const getChildrenTransactions = async (parentTransaction) => {
     });
 };
 
+const walletBalance = async (publicKey, challengeUuid) => {
+    let balance = 0;
+    const toTransactions = await Transaction.findAll({
+        where: {toAddress: publicKey, challengeUuid}
+    });
+    const fromTransactions = await Transaction.findAll({
+        where: {fromAddress: publicKey, challengeUuid}
+    });
+    toTransactions.forEach((transaction) => {
+        balance += transaction.numShares;
+    });
+    fromTransactions.forEach((transaction) => {
+        balance -= transaction.numShares;
+    });
+    return balance;
+};
+
 const challengesController = {
     async list(_, res) {
         try {
@@ -74,16 +91,29 @@ const challengesController = {
         res.status(200).send({challenge, transaction});
     },
     async retrieveSponsoredChallenges({params}, res) {
+        const sponsoredChallengeBalances = [];
         const sponsorWalletAddress = params.sponsorWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
             return res.status(200).send({ sponsoredChallenges: [] });
         }
-        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isComplete: false}});
-        res.status(200).send({sponsoredChallenges});
+        const sponsoredChallenges = await Challenge.findAll({where: {sponsorWalletAddress, isComplete: false}, include: [{model: Transaction, as: 'transactions'}]});
+
+        if (sponsoredChallenges.length > 0) {
+            sponsoredChallenges.forEach(async (sponsoredChallenge, index) => {
+                const challengeBalance = await walletBalance(sponsorWalletAddress, sponsoredChallenge.uuid);
+                sponsoredChallengeBalances.push(challengeBalance);
+                if (index === sponsoredChallenges.length - 1) {
+                    return res.status(200).send({sponsoredChallenges, sponsoredChallengeBalances});
+                }
+            });
+        } else {
+            return res.status(200).send({sponsoredChallenges, sponsoredChallengeBalances});
+        }
     },
     async retrieveHeldChallenges({params}, res) {
         const heldChallenges = [];
+        const heldChallengeBalances = [];
         const holderWalletAddress = params.holderWalletAddress;
         const wallet = await Wallet.findOne({ where: { address: holderWalletAddress } });
         if (!wallet) {
@@ -95,7 +125,18 @@ const challengesController = {
                 heldChallenges.push(challenge);
             }
         });
-        res.status(200).send({heldChallenges});
+
+        if (heldChallenges.length > 0) {
+            heldChallenges.forEach(async (heldChallenge, index) => {
+                const challengeBalance = await walletBalance(holderWalletAddress, heldChallenge);
+                heldChallengeBalances.push(challengeBalance);
+                if (index === heldChallenges.length - 1) {
+                    return res.status(200).send({heldChallenges, heldChallengeBalances});
+                }
+            });
+        } else {
+            return res.status(200).send({heldChallenges, heldChallengeBalances});
+        }
     },
     async retrieveAllLeafNodeTransactions({params}, res) {
         let leafNodeTransactions = [];
