@@ -16,6 +16,9 @@ module.exports = {
                     description: {
                         type: DataTypes.STRING
                     },
+                    company: {
+                        type: DataTypes.STRING
+                    },
                     imageUrl: {
                         type: DataTypes.STRING
                     },
@@ -55,7 +58,8 @@ module.exports = {
                     maxShares: {
                         type: DataTypes.INTEGER,
                         validate: {
-                            min: 1
+                            min: 1,
+                            max: 1000000
                         }
                     },
                     maxRedemptions: {
