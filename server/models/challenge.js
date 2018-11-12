@@ -42,7 +42,8 @@ module.exports = (sequelize, DataTypes) => {
         maxShares: {
             type: DataTypes.INTEGER,
             validate: {
-                min: 1
+                min: 1,
+                max: 1000000
             }
         },
         maxRedemptions: {
