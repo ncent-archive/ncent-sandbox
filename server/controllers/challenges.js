@@ -183,6 +183,39 @@ const challengesController = {
                 return res.status(200).send({leafNodeTransactions});
             }
         });
+    },
+    async retrieveAllChallengeBalances({params}, res) {
+        let challengeBalanceData = {};
+        const challengeUuid = params.challengeUuid;
+        const challengeTransactions = await Transaction.findAll({
+            where: {
+                challengeUuid
+            }
+        });
+
+        if (challengeTransactions) {
+            challengeTransactions.forEach(transaction => {
+                const fromAddress = transaction.fromAddress;
+                const toAddress = transaction.toAddress;
+                const numShares = transaction.numShares;
+
+                if (transaction.fromAddress !== TOKEN_GRAVEYARD_ADDRESS) {
+                    challengeBalanceData[fromAddress] -= numShares;
+                }
+
+                if (transaction.toAddress !== TOKEN_GRAVEYARD_ADDRESS) {
+                    if (!challengeBalanceData[toAddress]) {
+                        challengeBalanceData[toAddress] = numShares;
+                    } else {
+                        challengeBalanceData[toAddress] += numShares;
+                    }
+                }
+            })
+        } else {
+            return res.status(403).send({message: "challenge has no transactions"});
+        }
+
+        return res.status(200).send({challengeBalanceData});
     }
 };
 
