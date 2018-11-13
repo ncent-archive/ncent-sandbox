@@ -185,7 +185,7 @@ const challengesController = {
         });
     },
     async retrieveAllChallengeBalances({params}, res) {
-        let challengeBalanceData = {};
+        let challengeBalances = {};
         const challengeUuid = params.challengeUuid;
         const challengeTransactions = await Transaction.findAll({
             where: {
@@ -200,14 +200,14 @@ const challengesController = {
                 const numShares = transaction.numShares;
 
                 if (transaction.fromAddress !== TOKEN_GRAVEYARD_ADDRESS) {
-                    challengeBalanceData[fromAddress] -= numShares;
+                    challengeBalances[fromAddress] -= numShares;
                 }
 
                 if (transaction.toAddress !== TOKEN_GRAVEYARD_ADDRESS) {
-                    if (!challengeBalanceData[toAddress]) {
-                        challengeBalanceData[toAddress] = numShares;
+                    if (!challengeBalances[toAddress]) {
+                        challengeBalances[toAddress] = numShares;
                     } else {
-                        challengeBalanceData[toAddress] += numShares;
+                        challengeBalances[toAddress] += numShares;
                     }
                 }
             })
@@ -215,7 +215,7 @@ const challengesController = {
             return res.status(403).send({message: "challenge has no transactions"});
         }
 
-        return res.status(200).send({challengeBalanceData});
+        return res.status(200).send({challengeBalances});
     }
 };
 
