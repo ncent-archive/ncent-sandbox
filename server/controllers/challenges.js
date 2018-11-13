@@ -187,6 +187,11 @@ const challengesController = {
     async retrieveAllChallengeBalances({params}, res) {
         let challengeBalances = {};
         const challengeUuid = params.challengeUuid;
+        const challenge = await Challenge.find({
+            where: {
+                uuid: challengeUuid
+            }
+        });
         const challengeTransactions = await Transaction.findAll({
             where: {
                 challengeUuid
@@ -199,11 +204,11 @@ const challengesController = {
                 const toAddress = transaction.toAddress;
                 const numShares = transaction.numShares;
 
-                if (transaction.fromAddress !== TOKEN_GRAVEYARD_ADDRESS) {
+                if (fromAddress !== TOKEN_GRAVEYARD_ADDRESS && fromAddress !== challenge.sponsorWalletAddress) {
                     challengeBalances[fromAddress] -= numShares;
                 }
 
-                if (transaction.toAddress !== TOKEN_GRAVEYARD_ADDRESS) {
+                if (toAddress !== TOKEN_GRAVEYARD_ADDRESS && toAddress !== challenge.sponsorWalletAddress) {
                     if (!challengeBalances[toAddress]) {
                         challengeBalances[toAddress] = numShares;
                     } else {
