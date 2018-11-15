@@ -53,7 +53,7 @@ const challengesController = {
     },
     async create({body, params}, res) {
         let wallet;
-        const { name, description, imageUrl, participationUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
+        const { name, description, company, imageUrl, participationUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
         const sponsorWalletAddress = params.address;
         wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
@@ -66,6 +66,7 @@ const challengesController = {
         const challenge = await Challenge.create({
             name,
             description,
+            company,
             imageUrl,
             participationUrl,
             expiration,
@@ -78,7 +79,7 @@ const challengesController = {
             isComplete: false
         });
 
-        const reconstructedObject = { rewardAmount, name, description, imageUrl, participationUrl, expiration, tokenTypeUuid, rewardType, maxShares, maxRedemptions };
+        const reconstructedObject = { rewardAmount, name, description, company, imageUrl, participationUrl, expiration, tokenTypeUuid, rewardType, maxShares, maxRedemptions };
         if (!isVerified(sponsorWalletAddress, signed, reconstructedObject)) {
             return res.status(403).send({ message: "Invalid transaction signing" });
         }
@@ -182,6 +183,44 @@ const challengesController = {
                 return res.status(200).send({leafNodeTransactions});
             }
         });
+    },
+    async retrieveAllChallengeBalances({params}, res) {
+        let challengeBalances = {};
+        const challengeUuid = params.challengeUuid;
+        const challenge = await Challenge.find({
+            where: {
+                uuid: challengeUuid
+            }
+        });
+        const challengeTransactions = await Transaction.findAll({
+            where: {
+                challengeUuid
+            }
+        });
+
+        if (challengeTransactions) {
+            challengeTransactions.forEach(transaction => {
+                const fromAddress = transaction.fromAddress;
+                const toAddress = transaction.toAddress;
+                const numShares = transaction.numShares;
+
+                if (fromAddress !== TOKEN_GRAVEYARD_ADDRESS && fromAddress !== challenge.sponsorWalletAddress) {
+                    challengeBalances[fromAddress] -= numShares;
+                }
+
+                if (toAddress !== TOKEN_GRAVEYARD_ADDRESS && toAddress !== challenge.sponsorWalletAddress) {
+                    if (!challengeBalances[toAddress]) {
+                        challengeBalances[toAddress] = numShares;
+                    } else {
+                        challengeBalances[toAddress] += numShares;
+                    }
+                }
+            })
+        } else {
+            return res.status(403).send({message: "challenge has no transactions"});
+        }
+
+        return res.status(200).send({challengeBalances});
     }
 };
 
