@@ -67,7 +67,7 @@ module.exports = {
                         validate: {
                             min: 1
                         },
-                        defaultValue: 1
+                        defaultValue: 100
                     },
                     isComplete: {
                         type: DataTypes.BOOLEAN
