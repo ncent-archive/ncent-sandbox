@@ -56,6 +56,12 @@ const isVerified = (publicKeyStr, signed, reconstructedObject) => {
     );
 };
 
+const checkForExpiration = (challenge) => {
+    if (!challenge.isComplete && challenge.expiration < Date.now()) {
+        challenge.updateAttributes({isComplete: true});
+    }
+};
+
 const transactionsController = {
     // GET ()
     // -> [{transactionData}...{transactionData}]
@@ -109,6 +115,12 @@ const transactionsController = {
             include: [{model: Transaction, as: 'transactions'}]
         });
 
+        checkForExpiration(challenge);
+
+        if (challenge.isComplete) {
+            return res.status(403).send("challenge is already finished");
+        }
+
         const givenTransactions = await getGivenTransactions(fromAddress, challenge.uuid);
         const receivedTransactions = await getReceivedTransactions(fromAddress, challenge.uuid);
         const oldestOwnedTransaction = await getOldestTransaction(givenTransactions, receivedTransactions);
@@ -134,8 +146,6 @@ const transactionsController = {
         receivedTransactions.forEach(transaction => {
             receivedShares += transaction.numShares;
         });
-
-        console.log(numShares, receivedShares, givenShares);
 
         if (numShares > (receivedShares - givenShares)) {
             return res.status(403).send({message: "not enough shares to send"});
@@ -211,6 +221,12 @@ const transactionsController = {
         });
         if (!challenge) {
             return res.status(404).send({message: "Challenge not found"});
+        }
+
+        checkForExpiration(challenge);
+
+        if (challenge.isComplete) {
+            return res.status(403).send("challenge is already finished");
         }
 
         const redeemerWallet = await Wallet.findOne({where: {address: redeemerAddress}});

@@ -55,6 +55,11 @@ const challengesController = {
         let wallet;
         const { name, description, company, imageUrl, participationUrl, expiration, tokenTypeUuid, rewardAmount, rewardType, maxShares, maxRedemptions, signed } = body;
         const sponsorWalletAddress = params.address;
+
+        if (expiration < Date.now()) {
+            return res.status(403).send({message: "expiration date not valid"});
+        }
+
         wallet = await Wallet.findOne({ where: { address: sponsorWalletAddress } });
         if (!wallet) {
             wallet = await Wallet.create({ address: sponsorWalletAddress })
