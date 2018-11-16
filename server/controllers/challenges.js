@@ -136,30 +136,29 @@ const challengesController = {
             return res.status(200).send({heldChallenges: [], heldChallengeBalances: [], heldChallengeRemainingRedemptions: []});
         }
         const allChallenges = await Challenge.findAll({where: {isComplete: false}, include: [{model: Transaction, as: 'transactions'}]});
-        allChallenges.forEach(challenge => {
-            if (challenge.transactions.length > 1 && challenge.transactions[challenge.transactions.length - 1].toAddress === holderWalletAddress) {
-                heldChallenges.push(challenge);
+        allChallenges.forEach(async (challenge, index) => {
+            if (challenge.sponsorWalletAddress !== holderWalletAddress) {
+                const challengeBalance = await walletBalance(holderWalletAddress, challenge.uuid);
+                if (challengeBalance && challengeBalance > 0) {
+                    heldChallenges.push(challenge);
+                    heldChallengeBalances.push(challengeBalance);
+                    const redeemedTransactions = await Transaction.findAll({
+                        where: {
+                            uuid: challenge.uuid,
+                            toAddress: TOKEN_GRAVEYARD_ADDRESS
+                        }
+                    });
+                    heldChallengeRemainingRedemptions.push(challenge.maxRedemptions - redeemedTransactions.length);
+                }
             }
-        });
-
-        if (heldChallenges.length > 0) {
-            heldChallenges.forEach(async (heldChallenge, index) => {
-                const challengeBalance = await walletBalance(holderWalletAddress, heldChallenge.uuid);
-                heldChallengeBalances.push(challengeBalance);
-                const redeemedTransactions = await Transaction.findAll({
-                    where: {
-                        uuid: heldChallenge.uuid,
-                        toAddress: TOKEN_GRAVEYARD_ADDRESS
-                    }
-                });
-                heldChallengeRemainingRedemptions.push(heldChallenge.maxRedemptions - redeemedTransactions.length);
-                if (index === heldChallenges.length - 1) {
+            if (index === allChallenges.length - 1) {
+                if (heldChallenges.length < 1) {
+                    return res.status(200).send({heldChallenges: [], heldChallengeBalances: [], heldChallengeRemainingRedemptions: []});
+                } else {
                     return res.status(200).send({heldChallenges, heldChallengeBalances, heldChallengeRemainingRedemptions});
                 }
-            });
-        } else {
-            return res.status(200).send({heldChallenges: [], heldChallengeBalances: [], heldChallengeRemainingRedemptions: []});
-        }
+            }
+        });
     },
     async retrieveAllLeafNodeTransactions({params}, res) {
         let leafNodeTransactions = [];
