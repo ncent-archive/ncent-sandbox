@@ -42,12 +42,7 @@ const tokenTypeController = {
   async listOne({params}, res) {
     try {
       const { tokenTypeUuid } = params;
-      const tokenTypeWithTransactions = await TokenType.findById(tokenTypeUuid, {
-        include: [{
-          model: Transaction,
-          as: 'transactions',
-        }],
-      });
+      const tokenTypeWithTransactions = await TokenType.findById(tokenTypeUuid);
       if (!tokenTypeWithTransactions) {
         return res.status(404).send({ message: "TokenType not found"});
       }

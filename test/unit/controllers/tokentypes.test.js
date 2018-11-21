@@ -1,6 +1,6 @@
 const StellarSdk = require('stellar-sdk');
 const tokentypes = require('../../../server/controllers').tokentypes;
-const db = require('../../../server/models')
+const db = require('../../../server/models');
 const TokenType = db.TokenType;
 const Wallet = db.Wallet;
 
@@ -42,7 +42,7 @@ describe('tokentypes Controller', () => {
             );
             expect(typeof tokenType.uuid).toBe('string');
             expect(tokenType.sponsorUuid).toBe(tokenTypeTemplate.sponsorUuid);
-            expect(tokenType.totalTokens).toBe(tokenTypeTemplate.totalTokens);
+            expect(parseInt(tokenType.totalTokens)).toBe(tokenTypeTemplate.totalTokens);
         });
 
         it('returns a wallet storing given sponsorUuid', () => {
