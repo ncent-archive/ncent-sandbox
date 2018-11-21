@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.UUID,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: false,
             defaultValue: DataTypes.UUIDV4,
         },
         expiryDate: {

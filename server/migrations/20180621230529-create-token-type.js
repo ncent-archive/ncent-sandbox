@@ -12,8 +12,7 @@ module.exports = {
                     uuid: {
                         type: DataTypes.UUID,
                         primaryKey: true,
-                        allowNull: false,
-                        autoIncrement: false,
+                        allowNull: false
                     },
                     expiryDate: {
                         type: DataTypes.DATE,

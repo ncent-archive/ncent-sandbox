@@ -1,6 +1,6 @@
 const db = require('../../../server/models')
 const TokenType = db.TokenType;
-const Challenge = db.Transact;
+const Challenge = db.Challenge;
 const StellarSdk = require('stellar-sdk');
 
 describe('TokenType Model', async () => {
@@ -33,7 +33,7 @@ describe('TokenType Model', async () => {
         );
         expect(typeof tokenType.uuid).toBe('string');
         expect(tokenType.sponsorUuid).toBe(tokenTypeTemplate.sponsorUuid);
-        expect(tokenType.totalTokens).toBe(tokenTypeTemplate.totalTokens);
+        expect(parseInt(tokenType.totalTokens)).toBe(tokenTypeTemplate.totalTokens);
         done();
     });
 
