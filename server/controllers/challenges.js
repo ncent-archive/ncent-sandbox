@@ -17,12 +17,6 @@ const isVerified = (publicKeyStr, signed, reconstructedObject) => {
     );
 };
 
-const getChildrenTransactions = async (parentTransaction) => {
-    return await Transaction.findAll({
-        where: {parentTransaction}
-    });
-};
-
 const walletBalance = async (publicKey, challengeUuid) => {
     let balance = 0;
     const toTransactions = await Transaction.findAll({
@@ -157,34 +151,6 @@ const challengesController = {
                 } else {
                     return res.status(200).send({heldChallenges, heldChallengeBalances, heldChallengeRemainingRedemptions});
                 }
-            }
-        });
-    },
-    async retrieveAllLeafNodeTransactions({params}, res) {
-        let leafNodeTransactions = [];
-        const challengeUuid = params.challengeUuid;
-        const challenge = await Challenge.find({where: {uuid: challengeUuid}, include: [{model: Transaction, as: 'transactions'}]});
-
-        if (!challenge) {
-            return res.status(404).send({message: "Challenge not found"});
-        }
-
-        const allTransactions = challenge.transactions;
-        if (allTransactions && allTransactions.length < 1) {
-            return res.status(200).send({leafNodeTransactions});
-        }
-
-        allTransactions.forEach(async (transaction, index) => {
-            if (transaction.toAddress !== TOKEN_GRAVEYARD_ADDRESS) {
-                const childrenTransactions = await getChildrenTransactions(transaction.uuid);
-
-                if (childrenTransactions && childrenTransactions.length < 1) {
-                    leafNodeTransactions.push(transaction);
-                }
-            }
-
-            if (index === allTransactions.length - 1) {
-                return res.status(200).send({leafNodeTransactions});
             }
         });
     },
