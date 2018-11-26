@@ -96,7 +96,7 @@ const transactionsController = {
         }
         const transaction = await Transaction.create({
             numShares,
-            fromAddress: address,
+            fromAddress: TOKEN_GRAVEYARD_ADDRESS,
             toAddress: address,
             challengeUuid
         });
@@ -148,7 +148,7 @@ const transactionsController = {
         });
 
         if (numShares > (receivedShares - givenShares)) {
-            return res.status(403).send({message: "not enough shares to send"});
+            return res.status(403).send({message: "not enough tokens to send"});
         }
 
         const reconstructedObject = {fromAddress, toAddress, numShares};
@@ -196,7 +196,6 @@ const transactionsController = {
         if (!wallet) {
             return res.status(404).send({message: "Wallet not found"});
         }
-        console.log(challengeUuid);
         const challenge = await Challenge.find({where: {uuid: challengeUuid}});
         if (!challenge) {
             return res.status(404).send({message: "Challenge not found"});
