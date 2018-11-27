@@ -225,16 +225,13 @@ const transactionsController = {
         checkForExpiration(challenge);
 
         if (challenge.isComplete) {
-            return res.status(403).send("challenge is already finished");
+            return res.status(403).send({message: "Challenge has already been completed"});
         }
 
         const redeemerWallet = await Wallet.findOne({where: {address: redeemerAddress}});
         if (!redeemerWallet) {
             return res.status(404).send({message: "redeemer wallet not found"});
-        }
 
-        if (challenge.isComplete) {
-            return res.status(403).send({message: "Challenge has already been completed"});
         }
 
         const reconstructedObject = {challengeUuid, redeemerAddress};
