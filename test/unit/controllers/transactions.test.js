@@ -43,7 +43,7 @@ describe('transactions Controller', () => {
             transaction = transactionObject;
             done();
         };
-        createOriginTransaction(walletOwnerKeypair, challenge.uuid, AMOUNT, tHandler);
+        await createOriginTransaction(walletOwnerKeypair, challenge.uuid, AMOUNT, tHandler);
     });
 
     afterEach(async (done) => {
@@ -173,7 +173,7 @@ describe('transactions Controller', () => {
             shareTransaction(walletOwnerKeypair, AMOUNT/2, challenge.uuid, handleShare1);
         });
 
-        it('throws an error when given an invalid tokenUuid', async (done) => {
+        it('throws an error when given an invalid challengeUuid', async (done) => {
             const tests = (res) => {
                 expect(res.message).not.toBe(undefined);
                 done();
@@ -181,7 +181,7 @@ describe('transactions Controller', () => {
             await transactions.provenanceChainFIFO({
                 params: {
                     address: walletOwnerKeypair.publicKey(),
-                    tokenTypeUuid: '44444444-4444-4444-4444-444444444444'
+                    challengeUuid: '44444444-4444-4444-4444-444444444444'
                 }
             }, new psuedoRes(tests));
         });
@@ -194,9 +194,111 @@ describe('transactions Controller', () => {
             await transactions.provenanceChainFIFO({
                 params: {
                     address: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-                    tokenTypeUuid: tokenType.uuid
+                    challengeUuid: challenge.uuid
                 }
             }, new psuedoRes(tests));
+        });
+    });
+
+    describe('redeem', () => {
+        it('throws an error when given an invalid challengeUuid', async (done) => {
+            const tests = (res) => {
+                expect(res.message).toBe("Challenge not found");
+                done();
+            };
+            await transactions.redeem({
+                body: {
+                    address: walletOwnerKeypair.publicKey(),
+                    challengeUuid: '44444444-4444-4444-4444-444444444444'
+                }
+            }, new psuedoRes(tests));
+        });
+
+        it('throws an error when trying to redeem a challenge that was already finished', async (done) => {
+            const tests = (res) => {
+                expect(res.message).toBe("Challenge has already been completed");
+                done();
+            };
+            await challenge.updateAttributes({isComplete: true});
+            await transactions.redeem({
+                body: {
+                    address: walletOwnerKeypair.publicKey(),
+                    challengeUuid: challenge.uuid
+                }
+            }, new psuedoRes(tests));
+        });
+
+        it("throws an error when trying to redeem a wallet that doesn't exists", async (done) => {
+            const tests = (res) => {
+                expect(res.message).toBe("redeemer wallet not found");
+                done();
+            };
+            await transactions.redeem({
+                body: {
+                    challengeUuid: challenge.uuid
+                }
+            }, new psuedoRes(tests));
+        });
+
+        it("throws an error when trying to redeem a wallet that has no tokens", async (done) => {
+            const tests = (res) => {
+                expect(res.message).toBe("not enough shares left for redemption");
+                done();
+            };
+
+            let receiverKeypair1;
+            let receiverKeypair2;
+
+            const handleShare1 = async sharedTransaction => {
+                receiverKeypair1 = sharedTransaction.receiverKeypair;
+                const transaction2 = sharedTransaction.transaction.transaction;
+                await shareTransaction(receiverKeypair1, AMOUNT/2, challenge.uuid, handleShare2);
+            };
+
+            const handleShare2 = async sharedTransaction => {
+                receiverKeypair2 = sharedTransaction.receiverKeypair;
+
+                const ownerPrivateKey = walletOwnerKeypair._secretKey;
+                const messageObj = {challengeUuid: challenge.uuid, redeemerAddress: receiverKeypair1.publicKey()};
+                messageObj.signed = signObject(messageObj, ownerPrivateKey);
+
+                await transactions.redeem({
+                    body: messageObj
+                }, new psuedoRes(tests));
+            };
+
+            await shareTransaction(walletOwnerKeypair, AMOUNT/2, challenge.uuid, handleShare1);
+        });
+
+        it("returns a redemption transaction to the tokengraveyard", async (done) => {
+            const tests = (res) => {
+                expect(res.redeemTransaction).not.toBe(undefined);
+                expect(res.redeemTransaction.toAddress).toBe(TOKEN_GRAVEYARD_ADDRESS);
+                done();
+            };
+
+            let receiverKeypair1;
+            let receiverKeypair2;
+
+            const handleShare1 = async sharedTransaction => {
+                receiverKeypair1 = sharedTransaction.receiverKeypair;
+                const transaction2 = sharedTransaction.transaction.transaction;
+                await shareTransaction(receiverKeypair1, AMOUNT/2, challenge.uuid, handleShare2);
+            };
+
+            const handleShare2 = async sharedTransaction => {
+                receiverKeypair2 = sharedTransaction.receiverKeypair;
+
+                const ownerPrivateKey = walletOwnerKeypair._secretKey;
+                const messageObj = {challengeUuid: challenge.uuid, redeemerAddress: receiverKeypair2.publicKey()};
+                messageObj.signed = signObject(messageObj, ownerPrivateKey);
+
+                await transactions.redeem({
+                    body: messageObj
+                }, new psuedoRes(tests));
+            };
+
+            await shareTransaction(walletOwnerKeypair, AMOUNT/2, challenge.uuid, handleShare1);
         });
     });
 });
